@@ -1,0 +1,122 @@
+sabre server build instructions:
+
+jasch 20121030
+
+tested under OS X 10.6.8
+with xcode 4.2
+and OpenFrameworks 0072
+
+YMMV
+
+------------------------------------
+1)
+    get OF
+    
+    download OpenFrameworks 0072  for xcode from:
+
+    http://www.openframeworks.cc/download/
+
+    follow installation instructions from 
+    
+    http://www.openframeworks.cc/setup/xcode/
+
+    NOTA BENE:
+
+    "Because 10.8 deprecates the 10.6 SDK, all QuickTime-based code in OF is broken. This means you need to manually install the 10.6 SDK until we have a replacement for quicktime. For instructions, check this thread on the forum."
+
+    test until you can build the serialExample in the /examples/communication folder....
+
+------------------------------------    
+2)
+    get project through git
+
+    in the terminal cd into the new folder 
+
+    your/path/to/of_0072_osx_release/apps/myApps
+
+    and run the git clone cmd:
+
+    git clone gitolite@code.zhdk.ch:sabreServer.git
+
+------------------------------------    
+3) 
+    modify the following files in the distro
+
+a)
+    in /addons/ofxOSC/src in ofxOscSender.h change:
+
+    <code>
+        void setup( std::string hostname, int port );
+    </code>
+	
+    to:
+
+    <code>
+        bool setup( std::string hostname, int port );
+    </code>
+
+
+    in /addons/ofxOSC/src in ofxOscSender.cpp change:
+
+    <code>
+        void ofxOscSender::setup( std::string hostname, int port )
+        {
+        	if ( socket )
+        		shutdown();
+	
+        	socket = new UdpTransmitSocket( IpEndpointName( hostname.c_str(), port ) );
+        }
+    </code>
+
+    to:
+
+    <code>
+        bool ofxOscSender::setup( std::string hostname, int port )
+        {
+        	if ( socket ) {
+        		shutdown();
+        	}
+	
+        	socket = new UdpTransmitSocket( IpEndpointName( hostname.c_str(), port ) );
+            if(socket){
+                return true;
+            }else{
+                return false;
+            }
+        }
+    </code>
+
+
+b)
+
+    in /addons/ofxOsc/libs/oscpack/src/ip/posix change the following header paths in
+    in NetworkingUtils.cpp
+    in UdpSocket.cpp
+    in NetworkinUtilsWin.cpp
+    in UdpSocketWin.cpp
+
+    change 
+    #include "ip/NetworkingUtils.h"
+
+    to
+    #include "../NetworkingUtils.h"
+
+    and
+    in UdpSocket.cpp
+
+    change
+    #include "ip/PacketListener.h"
+    #include "ip/TimerListener.h"
+
+    to 
+    #include "../PacketListener.h"
+    #include "../TimerListener.h"
+
+------------------------------------    
+4)
+    finally you can start to build the sabreServer project itself
+    
+    enjoy
+
+
+
