@@ -5,9 +5,7 @@
  *  © 2012 ICST / ZHdK  
  *
  *  @author Jan Schacher
- *  @date 20121030
- *
- *   initial port to XCode 4 with protocol 3.0 
+ *  @date 20130617
  *
  */
  
@@ -17,8 +15,8 @@
 
 #include "ofxOsc.h"
 #include "ofxXmlSettings.h"
-
 #include "threadedSerial.h"
+#include "threadedOSC.h"
 
 //--------------------------------------------------------
 class sabreServer : public ofSimpleApp
@@ -33,6 +31,9 @@ public:
 	void startSerial();
 	void stopSerial();
 	void getSerialDeviceList();
+    
+	void startOSC();
+	void stopOSC();
 	
 	void keyReleased(int key);	
 
@@ -54,9 +55,12 @@ public:
 	
 	// class vars
 	threadedSerial	* serialThreadObject;
-	ofxOscReceiver	receiver;	
+    threadedOSC	* OSCThreadObject;
+
+    ofxOscReceiver receiver;
+	int		receiveport;
 	
-	ofSerial serial;
+//	ofSerial serial;
 	
 	ofxXmlSettings XML;
 	ofxXmlSettings XMLmidi;
@@ -71,7 +75,6 @@ public:
 	int		display;
 	bool	windowChanged;
 	
-	int		receiveport;
 	
 	bool	prefStatus;
 	string	status1;

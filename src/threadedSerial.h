@@ -13,14 +13,13 @@
 #define _THREADED_OBJECT
 
 #include "ofMain.h"
-#include "ofxOsc.h"
 #include "ofxXmlSettings.h"
 
 #include "sabreKeys.h"
 #include "sabreMidiNote.h"
 
 #define MAXNUM 64 // maximum number of input fields from serial stream
-#define PATTERNLENGTH 32
+#define PATTERNLENGTH 36
 #define FILTER_CHANGE // comment out in order to build without the redundancy check
 
 class threadedSerial : public ofThread
@@ -53,16 +52,12 @@ public:
 	string str1;
 	
 	ofTrueTypeFont TTF;
-	ofxOscSender sender;
+//	ofxOscSender sender;
 	
 	vector <ofSerialDeviceInfo> deviceList;
 
 	string		serialport;
 	int			baudrate;
-	string		sendIP;
-	int			sendport;		
-	int			framerate;
-	int			receiveport;
 	
 	char		bytesRead[3];				// data from serial, we will be trying to read 3
 	char		bytesReadString[4];			// a string needs a null terminator, so we need 3 + 1 bytes
@@ -147,29 +142,12 @@ public:
 	int			display;
 	bool		windowChanged;
 	
-	// OSC sender stuff
-	string		imuaddresses[12];
-	string		buttonaddresses[3];
-	string		airaddresses[2];
-    string      timestampAddressServer;
-	string		timestampAddressLeft;
-	string		timestampAddressRight;
-	string		timestampAddressAir;
-	string		keycodeaddress;
-	string		midinoteaddress;
-	string		headingaddress;
-    string      batteryAddressMain;
-    string      batteryAddressAir;
-	
-	long		keycode;
+    long		keycode;
 	long		keycodeOld;
 	bool		keycodeChanged;
 	int			midinote;
 	bool		validMidiNote;
-	
-	string		address[64];
-	ofxOscMessage m[MAXNUM];
-	bool		senderStatus;
+
 	
 	long		systime;
 	long		oldSystime;
