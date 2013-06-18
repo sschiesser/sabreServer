@@ -24,7 +24,7 @@ threadedSerial::threadedSerial()
 	
 	accelResolution = 4;
 	accelOffset = 1024;
-	accelScale = scale10;
+	accelScale = scale11;
 	
 	gyroResolution = 16;
 	gyroOffset = 32768;
@@ -423,10 +423,7 @@ void threadedSerial::parseIMU()
 		
 		IMU[i] = (rawIMU[i] / 280.) + 35.0;
 		
-		// calc the sums
-		// TODO: calc abs-diff-sigma
-		
-		
+		// calc the sums		
 		summedIMU[0] = ( fabs(IMU[0] - 0.5) + fabs(IMU[1] - 0.5) + fabs(IMU[2] - 0.5) ) * 0.6666666666666666666666666;
 		summedIMU[1] = ( fabs(IMU[3] - 0.5) + fabs(IMU[4] - 0.5) + fabs(IMU[5] - 0.5) ) * 0.6666666666666666666666666;
 		summedIMU[2] = ( fabs(IMU[6] - 0.5) + fabs(IMU[7] - 0.5) + fabs(IMU[8] - 0.5) ) * 0.6666666666666666666666666;
@@ -444,7 +441,7 @@ void threadedSerial::parseAir()
 		air[0] = ((double)(airLong[0] / 100.0));    // + 1.0) * 0.5;
 		air[1] = ((double)(airLong[1] / 100.0));	// + 1.0) * 0.5; 
         
-        batteryLevelAir = input[2][8];
+        batteryLevelAir = input[2][8] & 0xF;
         timestampAir = input[2][9] + (input[2][10] << 8);
         linkQualityAir = input[2][11];
 	}

@@ -70,8 +70,7 @@ void sabreServer::setup()
 	startOSC();
 	
 	ofSetWindowPosition(0,44);
-    
-    
+
     // dumpPrefs();
 }
 
@@ -83,6 +82,7 @@ void sabreServer::update()
 	if(runOnce == 1) {
 		if(now > (runOnceStart + runOnceDelay) )
 		{
+            
 		}
 	}
 	receiveOSC();
@@ -295,6 +295,9 @@ void sabreServer::startSerial()
 	}
 	
 	serialThreadObject->status = serialThreadObject->serial.setup(serialThreadObject->serialport, serialThreadObject->baudrate);
+    
+    // check if port is REALLY open, how?
+    
 	if(serialThreadObject->status) {
 		status1 = "Device open ";//+serialThreadObject->serialport+" "+ofToString(serialThreadObject->baudrate);
 // 		ofSetWindowTitle(serialThreadObject->serialport);

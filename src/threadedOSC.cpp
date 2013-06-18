@@ -57,7 +57,7 @@ void threadedOSC::threadedFunction()
 	while( isThreadRunning() != 0 ){
 		if( lock() ){
             sendOSC();
-			ofSleepMillis(10);
+			ofSleepMillis(OSCSendingInterval);
 			unlock();			
 		}
 	}
@@ -138,7 +138,6 @@ void threadedOSC::sendOSC()
 		}
 
         // IMU
-                
 		m[0].clear();
 		m[0].setAddress( imuaddresses[0] ); // IMU accelero scaled
 		m[0].addFloatArg( serialObject->IMU[0] );
@@ -218,12 +217,12 @@ void threadedOSC::sendOSC()
         
         m[13].clear();
 		m[13].setAddress( linkQualityAddressLeft ); // left link quality
-		m[13].addIntArg( serialObject->linkQualityLeft);
+		m[13].addIntArg( serialObject->linkQualityLeft );
 		sender.sendMessage( m[13] );
         
         m[14].clear();
 		m[14].setAddress( linkQualityAddressRight ); // right link quality
-		m[14].addIntArg( serialObject->linkQualityRight);
+		m[14].addIntArg( serialObject->linkQualityRight );
 		sender.sendMessage( m[14] );
         
         // reset flags
