@@ -25,9 +25,9 @@ threadedOSC::threadedOSC()
     timestampAddressRight = "/sabre/timestamp/right";
     timestampAddressAir = "/sabre/timestamp/air";
     
-    linkQualityLeft = "/sabre/linkquality/left";
-    linkQualityRight = "/sabre/linkquality/right";
-    linkQualityAir = "/sabre/linkquality/air";
+    linkQualityAddressLeft = "/sabre/linkquality/left";
+    linkQualityAddressRight = "/sabre/linkquality/right";
+    linkQualityAddressAir = "/sabre/linkquality/air";
 	
     OSCSendingInterval = 10; // default value
 }
@@ -66,81 +66,79 @@ void threadedOSC::threadedFunction()
 void threadedOSC::sendOSC()
 {	
 	// timestamps & keys
-	if(haveInput[1] || haveInput[0]) { // right hand triggers sending
-		
-		
-		m[25].clear();
-		m[25].setAddress( timestampAddressRight ); // timestamp
-        m[25].addIntArg( serialObject->timestampRight );
-		sender.sendMessage( m[25] );
-		
-		for(int i = 0; i < 25; i++) { // continuous key values
-			if(serialObject->keys[i].changed) {
-				m[i].clear();
-				m[i].setAddress( serialObject->keys[i].oscaddress+"/continuous");
-				m[i].addFloatArg( serialObject->keys[i].continuous );
-				sender.sendMessage( m[i] );
-			}
-		}
-		for(int i = 0; i < 25; i++) { // binary key values
-			if(serialObject->keys[i].binaryChanged) {
-				m[i].clear();
-				m[i].setAddress( serialObject->keys[i].oscaddress+"/down");
-				m[i].addIntArg( serialObject->keys[i].binary );
-				sender.sendMessage( m[i] );
-			}
-		}	
-		for(int i = 0; i < 25; i++) { // raw key values
-			if(serialObject->keys[i].changed) {
-				m[i].clear();
-				m[i].setAddress( serialObject->keys[i].oscaddress+"/raw");
-				m[i].addIntArg( serialObject->keys[i].raw );
-				sender.sendMessage( m[i] );
-			}
-		}	
-		if(serialObject->keycodeChanged) { // keycode
-			m[0].clear();
-			m[0].setAddress( keycodeaddress );
-			m[0].addIntArg( serialObject->keycode );
-			sender.sendMessage( m[0] );
-			serialObject->keycodeChanged = false;
-			// printf("sending keycode %d\n", keycode);
-		}
-		if(serialObject->validMidiNote) {	
-			m[0].clear();	// midinote derived from keycode
-			m[0].setAddress( midinoteaddress );
-			m[0].addIntArg( serialObject->midinote );
-			sender.sendMessage( m[0] );	
-			serialObject->validMidiNote = false;
-		}
-		for(int i = 0; i < 3; i++) { // buttons
-			if(serialObject->buttonChanged[i]) {
-				m[i].clear();
-				m[i].setAddress( buttonaddresses[2-i] );
-				m[i].addIntArg( serialObject->button[i] );
-				sender.sendMessage( m[i] );	
-			}
-		}
-		if(haveInput[0]) haveInput[0] = false;
-        if(haveInput[1]) haveInput[1] = false;
-    }
-	//IMU
-	if(haveInput[2]) {
+	if(serialObject->haveInput[0] || serialObject->haveInput[1]) { // both hands triggers sending
+
+        // Keys
+		m[61].clear();
+		m[61].setAddress( timestampAddressRight ); // timestamp Right
+        m[61].addIntArg( serialObject->timestampRight );
+		sender.sendMessage( m[61] );
         
-        m[25].clear();
-		m[25].setAddress( timestampAddressLeft ); // timestamp
-        m[25].addIntArg( serialObject->timestampLeft );
-		sender.sendMessage( m[25] );
+        m[61].clear();
+		m[61].setAddress( timestampAddressLeft ); // timestamp Left
+        m[61].addIntArg( serialObject->timestampLeft );
+		sender.sendMessage( m[61] );
         
 		serialObject->systime = ofGetElapsedTimeMillis();
 		serialObject->systemTimestamp = serialObject->systime - serialObject->oldSystime;
 		serialObject->oldSystime = serialObject->systime;
         
-        m[13].clear();
-		m[13].setAddress( timestampAddressServer ); // timestamp
-        m[13].addIntArg( serialObject->systemTimestamp );
-		sender.sendMessage( m[13] );
+        m[62].clear();
+		m[62].setAddress( timestampAddressServer ); // timestamp
+        m[62].addIntArg( serialObject->systemTimestamp );
+		sender.sendMessage( m[62] );
+        
 		
+		for(int i = 0; i < 25; i++) { // continuous key values
+			if(serialObject->keys[i].changed) {
+				m[i+16].clear();
+				m[i+16].setAddress( serialObject->keys[i].oscaddress+"/continuous");
+				m[i+16].addFloatArg( serialObject->keys[i].continuous );
+				sender.sendMessage( m[i+16] );
+			}
+		}
+		for(int i = 0; i < 25; i++) { // binary key values
+			if(serialObject->keys[i].binaryChanged) {
+				m[i+16].clear();
+				m[i+16].setAddress( serialObject->keys[i].oscaddress+"/down");
+				m[i+16].addIntArg( serialObject->keys[i].binary );
+				sender.sendMessage( m[i+16] );
+			}
+		}	
+		for(int i = 0; i < 25; i++) { // raw key values
+			if(serialObject->keys[i].changed) {
+				m[i+16].clear();
+				m[i+16].setAddress( serialObject->keys[i].oscaddress+"/raw");
+				m[i+16].addIntArg( serialObject->keys[i].raw );
+				sender.sendMessage( m[i+16] );
+			}
+		}	
+		if(serialObject->keycodeChanged) { // keycode
+			m[42].clear();
+			m[42].setAddress( keycodeaddress );
+			m[42].addIntArg( serialObject->keycode );
+			sender.sendMessage( m[42] );
+			serialObject->keycodeChanged = false;
+			// printf("sending keycode %d\n", keycode);
+		}
+		if(serialObject->validMidiNote) {	
+			m[43].clear();	// midinote derived from keycode
+			m[43].setAddress( midinoteaddress );
+			m[43].addIntArg( serialObject->midinote );
+			sender.sendMessage( m[43] );
+			serialObject->validMidiNote = false;
+		}
+		for(int i = 0; i < 3; i++) { // buttons
+			if(serialObject->buttonChanged[i]) {
+				m[i+44].clear();
+				m[i+44].setAddress( buttonaddresses[2-i] );
+				m[i+44].addIntArg( serialObject->button[i] );
+				sender.sendMessage( m[i+44] );	
+			}
+		}
+
+        // IMU
+                
 		m[0].clear();
 		m[0].setAddress( imuaddresses[0] ); // IMU accelero scaled
 		m[0].addFloatArg( serialObject->IMU[0] );
@@ -213,35 +211,54 @@ void threadedOSC::sendOSC()
 		m[11].addFloatArg( serialObject->IMU[9] );
 		sender.sendMessage( m[11] );
         
-        m[14].clear();
-		m[14].setAddress( batteryAddressMain ); // air temperature
-		m[14].addIntArg( serialObject->batteryLevelRight );
-		sender.sendMessage( m[14] );       
-		
-		haveInput[2] = false;
-	}
-	if(haveInput[3]) {
-        
-        m[25].clear();
-		m[25].setAddress( timestampAddressAir ); // timestamp
-        m[25].addIntArg( serialObject->timestampAir );
-		sender.sendMessage( m[25] );
-		
-		m[11].clear();
-		m[11].setAddress( airaddresses[0] ); // air pressure
-		m[11].addFloatArg( serialObject->air[0]);
-		sender.sendMessage( m[11] );	
-		
-		m[12].clear();
-		m[12].setAddress( airaddresses[1] ); // air temperature
-		m[12].addFloatArg( serialObject->air[1]);
+        m[12].clear();
+		m[12].setAddress( batteryAddressMain ); // battery level main
+		m[12].addIntArg( serialObject->batteryLevelRight );
 		sender.sendMessage( m[12] );
         
-		m[13].clear();
-		m[13].setAddress( batteryAddressAir ); // air temperature
-		m[13].addIntArg( serialObject->batteryLevelAir);
-		sender.sendMessage( m[13] );        
+        m[13].clear();
+		m[13].setAddress( linkQualityAddressLeft ); // left link quality
+		m[13].addIntArg( serialObject->linkQualityLeft);
+		sender.sendMessage( m[13] );
+        
+        m[14].clear();
+		m[14].setAddress( linkQualityAddressRight ); // right link quality
+		m[14].addIntArg( serialObject->linkQualityRight);
+		sender.sendMessage( m[14] );
+        
+        // reset flags
+		if(serialObject->haveInput[0]) serialObject->haveInput[0] = false;
+        if(serialObject->haveInput[1]) serialObject->haveInput[1] = false;
+	
+    }
+	if(serialObject->haveInput[2]) { // AirMems packet
+        
+        m[63].clear();
+		m[63].setAddress( timestampAddressAir ); // timestamp
+        m[63].addIntArg( serialObject->timestampAir );
+		sender.sendMessage( m[63] );
 		
-		haveInput[3] = false;
+		m[48].clear();
+		m[48].setAddress( airaddresses[0] ); // air pressure
+		m[48].addFloatArg( serialObject->air[0]);
+		sender.sendMessage( m[48] );
+		
+		m[49].clear();
+		m[49].setAddress( airaddresses[1] ); // air temperature
+		m[49].addFloatArg( serialObject->air[1]);
+		sender.sendMessage( m[49] );
+        
+		m[50].clear();
+		m[50].setAddress( batteryAddressAir ); // air battery
+		m[50].addIntArg( serialObject->batteryLevelAir);
+		sender.sendMessage( m[50] );
+        
+        m[51].clear();
+		m[51].setAddress( linkQualityAddressAir ); // air link quality
+		m[51].addIntArg( serialObject->linkQualityAir);
+		sender.sendMessage( m[51] );
+        
+        // reset flag
+		serialObject->haveInput[2] = false;
 	}
 }

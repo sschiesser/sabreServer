@@ -76,9 +76,9 @@ public:
 	string		headingaddress;
     string      batteryAddressMain;
     string      batteryAddressAir;
-    string      linkQualityLeft;
-    string      linkQualityRight;
-    string      linkQualityAir;
+    string      linkQualityAddressLeft;
+    string      linkQualityAddressRight;
+    string      linkQualityAddressAir;
 		
 	string		address[64];
 	ofxOscMessage m[MAXNUM];

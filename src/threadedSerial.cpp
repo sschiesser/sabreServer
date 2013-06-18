@@ -141,8 +141,8 @@ void threadedSerial::serialparse(unsigned char *c)
                 parseIMU();
                 calcKeycode();
             }
-        } else if(serialStream[1] == 242) { // start AirMems packet
-            if(serialStream[15] == 90) {
+        } else if(serialStream[1] == 242) { // AirMems packet
+            if(serialStream[14] == 90) {
                 for(i = 0; i < 13; i++) {
                     input[2][i] = serialStream[i+2];
                 }
@@ -365,7 +365,7 @@ void threadedSerial::parseRight()
 void threadedSerial::parseIMU()
 {
 	int i;
-	if(haveInput[2]) {
+	if(haveInput[1]) {
 		
 		
 		raw[0] = input[1][15] + (input[1][18]  & 0xF8) << 5; // accel
@@ -437,16 +437,16 @@ void threadedSerial::parseIMU()
 
 void threadedSerial::parseAir()
 {
-	if(haveInput[3]) {
+	if(haveInput[2]) {
 		airLong[0] = input[2][0] + (input[2][1] << 8) + (input[2][2] << 16) + (input[2][3] << 24) ; // pressure
 		airLong[1] = input[2][4] + (input[2][5] << 8) + (input[2][6] << 16) + (input[2][7] << 24) ; // temperature
 		
 		air[0] = ((double)(airLong[0] / 100.0));    // + 1.0) * 0.5;
 		air[1] = ((double)(airLong[1] / 100.0));	// + 1.0) * 0.5; 
         
-        batteryLevelAir = input[2][9];
-        timestampAir = input[2][10] + (input[2][11] << 8);
-        linkQualityAir = input[2][12];
+        batteryLevelAir = input[2][8];
+        timestampAir = input[2][9] + (input[2][10] << 8);
+        linkQualityAir = input[2][11];
 	}
 }
 
