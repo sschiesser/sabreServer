@@ -24,9 +24,13 @@ threadedOSC::threadedOSC()
     timestampAddressLeft = "/sabre/timestamp/left";
     timestampAddressRight = "/sabre/timestamp/right";
     timestampAddressAir = "/sabre/timestamp/air";
+    
+    linkQualityLeft = "/sabre/linkquality/left";
+    linkQualityRight = "/sabre/linkquality/right";
+    linkQualityAir = "/sabre/linkquality/air";
 	
-	TTF.loadFont("lucidagrande.ttf", 8, 1, 1, 0);
-	}
+    OSCSendingInterval = 10; // default value
+}
 
 threadedOSC::~threadedOSC()
 {
@@ -39,6 +43,7 @@ threadedOSC::~threadedOSC()
 void threadedOSC::start()
 {
 	startThread(true, false);   // blocking, verbose
+//    printf("OSC thread started\n");
 }
 
 void threadedOSC::stop()
@@ -52,7 +57,7 @@ void threadedOSC::threadedFunction()
 	while( isThreadRunning() != 0 ){
 		if( lock() ){
             sendOSC();
-			ofSleepMillis(1);
+			ofSleepMillis(10);
 			unlock();			
 		}
 	}
@@ -93,20 +98,20 @@ void threadedOSC::sendOSC()
 				sender.sendMessage( m[i] );
 			}
 		}	
-		if(keycodeChanged) { // keycode
+		if(serialObject->keycodeChanged) { // keycode
 			m[0].clear();
 			m[0].setAddress( keycodeaddress );
-			m[0].addIntArg( keycode );
+			m[0].addIntArg( serialObject->keycode );
 			sender.sendMessage( m[0] );
-			keycodeChanged = false;
+			serialObject->keycodeChanged = false;
 			// printf("sending keycode %d\n", keycode);
 		}
-		if(validMidiNote) {	
+		if(serialObject->validMidiNote) {	
 			m[0].clear();	// midinote derived from keycode
 			m[0].setAddress( midinoteaddress );
-			m[0].addIntArg( midinote );
+			m[0].addIntArg( serialObject->midinote );
 			sender.sendMessage( m[0] );	
-			validMidiNote = false;
+			serialObject->validMidiNote = false;
 		}
 		for(int i = 0; i < 3; i++) { // buttons
 			if(serialObject->buttonChanged[i]) {

@@ -35,7 +35,7 @@ public:
 
 	void sendOSC();
     
-    threadedSerial	* serialObject;
+    threadedSerial	* serialObject;         // pointer to the serial thread object
     
 	ofxXmlSettings	XML;
 	string str1;
@@ -44,7 +44,7 @@ public:
 	ofxOscSender sender;
 	
     string		sendIP;
-	int			sendport;		
+	int			sendport;
 	int			framerate;
 	int			receiveport;
 	
@@ -76,18 +76,15 @@ public:
 	string		headingaddress;
     string      batteryAddressMain;
     string      batteryAddressAir;
-	
-	long		keycode;
-	long		keycodeOld;
-	bool		keycodeChanged;
-	int			midinote;
-	bool		validMidiNote;
-	
+    string      linkQualityLeft;
+    string      linkQualityRight;
+    string      linkQualityAir;
+		
 	string		address[64];
 	ofxOscMessage m[MAXNUM];
+    
 	bool		senderStatus;
-	
-	
+    int         OSCSendingInterval;
 };
 
 #endif

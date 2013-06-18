@@ -50,14 +50,6 @@ void sabreServer::setup()
 	readMidicodes();
 	lastTime = ofGetElapsedTimef();
 	
-//	// open an outgoing connection to sendIP:PORT
-//	status = OSCThreadObject->sender.setup( OSCThreadObject->sendIP.c_str(), OSCThreadObject->sendport);
-//	if(status) {
-//		status2 = "Sending OSC to "+OSCThreadObject->sendIP+" on port "+ofToString(OSCThreadObject->sendport);
-//	} else {
-//		status2 = "Unable to open Network "+OSCThreadObject->sendIP+" on port "+ofToString(OSCThreadObject->sendport);
-//	}
-	
 	receiver.setup( receiveport );
 	
 	framerate = 25;
@@ -75,6 +67,7 @@ void sabreServer::setup()
  	getSerialDeviceList();
 	
 	startSerial();
+	startOSC();
 	
 	ofSetWindowPosition(0,44);
     
@@ -331,48 +324,29 @@ void sabreServer::stopSerial()
 void sabreServer::startOSC()
 {
 	if(OSCThreadObject->status) {
-        OSCThreadObject->stop(); // stops the thread, deletes the obejtc which closes the socket
+        OSCThreadObject->stop(); // stops the thread, deletes the object which also closes the socket
 	}
     
     // open an outgoing connection to sendIP:PORT
 	OSCThreadObject->status = OSCThreadObject->sender.setup( OSCThreadObject->sendIP.c_str(), OSCThreadObject->sendport);
 	if(OSCThreadObject->status) {
+        OSCThreadObject->start(); // the OSC thread
 		status2 = "Sending OSC to "+OSCThreadObject->sendIP+" on port "+ofToString(OSCThreadObject->sendport);
 	} else {
-        ofSystemAlertDialog("SABRe Server \n"+status1+serialThreadObject->serialport);
-
+        ofSystemAlertDialog("Sabre Server Unable to open Network "+OSCThreadObject->sendIP+" on port "+ofToString(OSCThreadObject->sendport));
 		status2 = "Unable to open Network "+OSCThreadObject->sendIP+" on port "+ofToString(OSCThreadObject->sendport);
 	}
-
-    
-//	serialThreadObject->status = serialThreadObject->serial.setup(serialThreadObject->serialport, serialThreadObject->baudrate);
-//	if(serialThreadObject->status) {
-//		status1 = "Device open ";//+serialThreadObject->serialport+" "+ofToString(serialThreadObject->baudrate);
-//                                 // 		ofSetWindowTitle(serialThreadObject->serialport);
-//		ofSetWindowTitle(titleString+" - Connection OK");
-//		serialThreadObject->start(); // the serial thread
-//	} else {
-//		status1 = "Unable to open ";//+serialThreadObject->serialport;
-//		serialThreadObject->stop(); // the thread
-//		ofSetWindowTitle(titleString+" - No Connection");
-//        
-//		ofSystemAlertDialog("SABRe Server \n"+status1+serialThreadObject->serialport);
-//	}
 	redrawFlag = 1;
 }
 
 void sabreServer::stopOSC()
 {
 	if(serialThreadObject->status) {
-		serialThreadObject->serial.close();
-		serialThreadObject->stop(); // the serial thread
-		serialThreadObject->status = false;
+        OSCThreadObject->stop(); // stops the thread, deletes the object which also closes the socket
+		OSCThreadObject->status = false;
 	}
 	redrawFlag = 1;
 }
-
-
-
 
 void sabreServer::getSerialDeviceList()
 {

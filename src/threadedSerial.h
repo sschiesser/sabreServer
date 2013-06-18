@@ -19,7 +19,7 @@
 #include "sabreMidiNote.h"
 
 #define MAXNUM 64 // maximum number of input fields from serial stream
-#define PATTERNLENGTH 36
+#define PATTERNLENGTH 40 // maximumnumber of bytes in a message
 #define FILTER_CHANGE // comment out in order to build without the redundancy check
 
 class threadedSerial : public ofThread
@@ -59,6 +59,7 @@ public:
 	string		serialport;
 	int			baudrate;
 	
+    // reading the serial buffer
 	char		bytesRead[3];				// data from serial, we will be trying to read 3
 	char		bytesReadString[4];			// a string needs a null terminator, so we need 3 + 1 bytes
 	int			nBytesRead;					// how much did we read?
@@ -67,7 +68,7 @@ public:
 	
 	unsigned char serialStream[PATTERNLENGTH];
 	
-	unsigned char input[4][MAXNUM];		// for the four different types of packets
+	unsigned char input[4][MAXNUM];         // for the four different types of packets
 	bool		haveInput[4];				// flags to signal a full packet was parsed successfully
 	
 	sabreKeys	keys[32];
@@ -95,17 +96,22 @@ public:
 	double		headingOld_y;
   	double		headingLowpassFactor;
     
+    
     long		timestampLeft;
 	long		timestampRight;
 	long		timestampAir;
     
     int         batteryLevelRight;
     int         batteryLevelAir;
+    
+    int         linkQualityLeft;
+    int         linkQualityRight;
+    int         linkQualityAir;
 	
 	int			keymin[MAXNUM];
 	int			keymax[MAXNUM];
 	bool		keyInverted[MAXNUM];
-	
+    
 	double		scale10;	
 	double		scale11;
 	double		scale12;
@@ -148,7 +154,6 @@ public:
 	int			midinote;
 	bool		validMidiNote;
 
-	
 	long		systime;
 	long		oldSystime;
 	long		systemTimestamp;

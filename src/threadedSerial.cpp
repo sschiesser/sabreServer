@@ -122,95 +122,36 @@ void threadedSerial::serialparse(unsigned char *c)
 	
 	// pattern matching
 	if (serialStream[0] == 65) { // packet start marker
-        if(serialStream[1] == 240) {	// start left hand packet
-            if(serialStream[2] == 28) {
-                if(serialStream[31] == 90) {
-                    for(i = 0; i < 27; i++) {
-                        input[0][i] = serialStream[i+3];
-                    }
-                    haveInput[0] = true;
-                    parseLeft();
-                    calcKeycode();
+        if(serialStream[1] == 240) {	// left hand packet
+            if(serialStream[22] == 90) {
+                for(i = 0; i < 20; i++) {
+                    input[0][i] = serialStream[i+2];
                 }
+                haveInput[0] = true;
+                parseLeft();
+                calcKeycode();
             }
-        } else if(serialStream[1] == 241) { // start right hand packet
-            if(serialStream[2] == 28) {
-                if(serialStream[31] == 90) {
-                    for(i = 0; i < 27; i++) {
-                        input[1][i] = serialStream[i+3];
-                    }
-                    haveInput[1] = true;
-                    parseRight();
-                    calcKeycode();
+        } else if(serialStream[1] == 241) { // right hand packet
+            if(serialStream[38] == 90) {
+                for(i = 0; i < 36; i++) {
+                    input[1][i] = serialStream[i+2];
                 }
+                haveInput[1] = true;
+                parseRight();
+                parseIMU();
+                calcKeycode();
             }
-        } else if(serialStream[1] == 242) { // start IMU packet
-            if(serialStream[2] == 21) {
-                if(serialStream[24] == 90) {
-                    for(i = 0; i < 20; i++) {
-                        input[2][i] = serialStream[i+3];
-                    }
-                    haveInput[2] = true;
-                    parseIMU();
+        } else if(serialStream[1] == 242) { // start AirMems packet
+            if(serialStream[15] == 90) {
+                for(i = 0; i < 13; i++) {
+                    input[2][i] = serialStream[i+2];
                 }
-            }
-			//		} else if(serialStream[1] == 242) { // air-mems packet  airMEMS
-			//            if(serialStream[13] == 90) {
-			//                for115(i = 0; i < 11; i++) {
-			//                    input[2][i] = serialStream[i+2];
-			//                }
-			//                haveInput[2] = true;
-			//                parseAir();
-			//            }
-			//		}
-            
-			// ********************
-			//  !! airMEMS_temp !!
-			// ********************
-		} else if(serialStream[1] == 243) { // air-mems packet  airMEMS
-			//            cout << "Matching 243\n";
-            if(serialStream[11] == 90) {
-				//                cout << "Matching 90/11\n";
-                for(i = 0; i < 10; i++) {
-                    input[3][i] = serialStream[i+2];
-                }
-                haveInput[3] = true;
+                haveInput[2] = true;
                 parseAir();
-            } else if(serialStream[12] == 90) {
-				//                cout << "Matching 90/12\n";
-                for(i = 0; i < 11; i++) {
-                    input[3][i] = serialStream[i+2];
-                }
-                haveInput[3] = true;
-                parseAir();
-            } else if(serialStream[13] == 90) {
-				//                cout << "Matching 90/13\n";
-                for(i = 0; i < 11; i++) {
-                    input[3][i] = serialStream[i+2];
-                }
-                haveInput[3] = true;
-                parseAir();
-            } else if(serialStream[14] == 90) {
-				//                cout << "Matching 90/14\n";
-                for(i = 0; i < 11; i++) {
-                    input[3][i] = serialStream[i+2];
-                }
-                haveInput[3] = true;
-                parseAir();
-            }
-        } // end airMEMS_temp
+           }
+        } // end airMEMS
     } // end patternmatching
 }
-
-//unsigned char threadedSerial::calcChecksum(int which, int length)
-//{
-//	unsigned char checksum = 0;
-//	for (int i = 0; i < length; i++) {
-//		checksum ^= input[which][i];
-//	}
-//	return checksum;	
-//}
-
 
 void threadedSerial::parseLeft()
 {
@@ -218,13 +159,44 @@ void threadedSerial::parseLeft()
 	int i, j;
 	
 	if(haveInput[0]) {
-		int now = ofGetElapsedTimeMillis();
-		
+
+        // parse out the 13 keys
+        keys[0].raw = input[0][0]; // the LSBs
+		keys[1].raw = input[0][1];
+		keys[2].raw = input[0][2];
+		keys[3].raw = input[0][3];
+		keys[4].raw = input[0][4];
+		keys[5].raw = input[0][5];
+		keys[6].raw = input[0][6];
+		keys[7].raw = input[0][7];
+		keys[8].raw = input[0][8];
+        keys[9].raw = input[0][9];
+        keys[10].raw = input[0][10];
+        keys[11].raw = input[0][11];
+        keys[12].raw = input[0][12];
+        
+		keys[0].raw += (input[0][13] & 0xC0) << 2;
+		keys[1].raw += (input[0][13] & 0x30) << 4;
+		keys[2].raw += (input[0][13] & 0xC) << 6;
+        keys[3].raw += (input[0][13] & 0x3) << 8;
+        
+        keys[4].raw += (input[0][14] & 0xC0) << 2;
+		keys[5].raw += (input[0][14] & 0x30) << 4;
+		keys[6].raw += (input[0][14] & 0xC) << 6;
+        keys[7].raw += (input[0][14] & 0x3) << 8;
+        
+        keys[8].raw += (input[0][15] & 0xC0) << 2;
+		keys[9].raw += (input[0][15] & 0x30) << 4;
+		keys[10].raw += (input[0][15] & 0xC) << 6;
+        keys[11].raw += (input[0][15] & 0x3) << 8;
+        
+        keys[12].raw += (input[0][16] & 0xC0) << 2;
+
+        
+        int now = ofGetElapsedTimeMillis();
 		for (int i = 0; i < 13; i++) { // 13 keys
 			j = i;
-			input[0][i*2] = input[0][i*2] & 0x03; // mask upper bits to filter out noise
-			keys[j].raw = (input[0][i*2] * 256) + input[0][i*2+1];
-			
+            
 			if(keys[j].inverted) {
 				keys[j].raw = 1023 - keys[j].raw;
 			}
@@ -274,9 +246,10 @@ void threadedSerial::parseLeft()
 			}
 #endif
 		}
-		button[0] = input[0][26] & 1;
-		button[1] = input[0][26] & 2;
-		button[2] = input[0][26] & 4;
+        
+		button[0] = (input[0][16] & 0x8) >> 3;
+		button[1] = (input[0][16] & 0x10) >> 4;
+		button[2] = (input[0][16] & 0x20) >> 5;
 		
 		for(int i = 0; i < 3; i++) {
 			if(button[i] != buttonOld[i]) {
@@ -285,7 +258,11 @@ void threadedSerial::parseLeft()
 			} else {
 				buttonChanged[i] = 0;
 			}
-		}        
+		}
+        
+        timestampLeft = input[0][17] + (input[0][18] << 8);
+        linkQualityLeft = input[0][19];
+
 	} // end haveInput check
 }
 
@@ -295,14 +272,40 @@ void threadedSerial::parseRight()
 	int i, j;
 	
 	if(haveInput[1]) {
+        
+        keys[13].raw = input[1][0]; // the LSBs
+		keys[14].raw = input[1][1];
+		keys[15].raw = input[1][2];
+		keys[16].raw = input[1][3];
+		keys[17].raw = input[1][4];
+		keys[18].raw = input[1][5];
+		keys[19].raw = input[1][6];
+		keys[20].raw = input[1][7];
+		keys[21].raw = input[1][8];
+        keys[22].raw = input[1][9];
+        keys[23].raw = input[1][10];
+        keys[24].raw = input[1][11];
+        
+		keys[13].raw += (input[1][12] & 0xC0) << 2;
+		keys[14].raw += (input[1][12] & 0x30) << 4;
+		keys[15].raw += (input[1][12] & 0xC) << 6;
+        keys[16].raw += (input[1][12] & 0x3) << 8;
+        
+        keys[17].raw += (input[1][13] & 0xC0) << 2;
+		keys[18].raw += (input[1][13] & 0x30) << 4;
+		keys[19].raw += (input[1][13] & 0xC) << 6;
+        keys[20].raw += (input[1][13] & 0x3) << 8;
+        
+        keys[21].raw += (input[1][14] & 0xC0) << 2;
+		keys[22].raw += (input[1][14] & 0x30) << 4;
+		keys[23].raw += (input[1][14] & 0xC) << 6;
+        keys[24].raw += (input[1][14] & 0x3) << 8;
+         
 		int now = ofGetElapsedTimeMillis();
 		
 		for (int i = 0; i < 12; i++) { // 12 keys
 			j = i+13; // the keys 13 to 25
-			
-			input[1][i*2] = input[1][i*2] & 0x03; // mask upper bits to filter out noise
-			keys[j].raw = (input[1][i*2] * 256) + input[1][i*2+1];
-			
+						
 			if(keys[j].inverted) {
 				keys[j].raw = 1023 - keys[j].raw;
 			}
@@ -351,11 +354,11 @@ void threadedSerial::parseRight()
 			}
 #endif
 		}
-        // ********************
-        //  !! airMEMS_temp !!
-        // ********************
-        batteryLevelRight = 0x08;
-        // end airMEMS_temp
+        // IMU parsing in separate function() using same input buffer
+        batteryLevelRight = input[1][32] & 0xF;
+        timestampRight = input[1][33] + (input[1][34] << 8);
+        linkQualityRight  = input[1][35];
+
 	}
 }
 
@@ -365,19 +368,20 @@ void threadedSerial::parseIMU()
 	if(haveInput[2]) {
 		
 		
-		raw[0] = (input[2][0] * 256) + input[2][1];
-		raw[1] = (input[2][2] * 256) + input[2][3];
-		raw[2] = (input[2][4] * 256) + input[2][5];
+		raw[0] = input[1][15] + (input[1][18]  & 0xF8) << 5; // accel
+		raw[1] = input[1][16] + ((input[1][18] & 0x7 ) << 10) + ((input[1][19] & 0xC0) << 2);
+		raw[2] = input[1][17] + (input[1][19]  & 0x3E) << 7;
 		
-		raw[3] = (input[2][6] * 256) + input[2][7];
-		raw[4] = (input[2][8] * 256) + input[2][9];
-		raw[5] = (input[2][10] * 256) + input[2][11];
+		raw[3] = input[1][20] + (input[1][24] << 8); // gyro
+		raw[4] = input[1][21] + (input[1][25] << 8);
+		raw[5] = input[1][22] + (input[1][26] << 8);
+
+		raw[9] = input[1][23] + (input[1][27] * 256); // temp
 		
-		raw[6] = (input[2][12] * 256) + input[2][13];
-		raw[7] = (input[2][14] * 256) + input[2][15];
-		raw[8] = (input[2][16] * 256) + input[2][17];
+		raw[6] = input[1][28] + ((input[1][31] & 0xF0) << 4); // compass / magneto
+		raw[7] = input[1][29] + ((input[1][31] & 0xF ) << 8);
+		raw[8] = input[1][30] + ((input[1][32] & 0xF0) << 4);
 		
-		raw[9] = (input[2][18] * 256) + input[2][19];
 		
 		// accelerometer
 		for(i = 0; i < 3; i++) {
@@ -434,36 +438,15 @@ void threadedSerial::parseIMU()
 void threadedSerial::parseAir()
 {
 	if(haveInput[3]) {
-		//		airLong[0] = input[2][3] * 16777216 + input[2][2] * 65536 + input[2][1] * 256 + input[2][0];
-		airLong[1] = input[3][7] * 16777216 + input[3][6] * 65536 + input[3][5] * 256 + input[3][4];
-		
-        // ********************
-        //  !! airMEMS_temp !!
-        // ********************
-		airLong[0] = (input[3][1]<<24) + (input[3][2]<<16) + (input[3][3]<<8) + input[3][4];
-        // end airMEMS_temp
+		airLong[0] = input[2][0] + (input[2][1] << 8) + (input[2][2] << 16) + (input[2][3] << 24) ; // pressure
+		airLong[1] = input[2][4] + (input[2][5] << 8) + (input[2][6] << 16) + (input[2][7] << 24) ; // temperature
 		
 		air[0] = ((double)(airLong[0] / 100.0));    // + 1.0) * 0.5;
 		air[1] = ((double)(airLong[1] / 100.0));	// + 1.0) * 0.5; 
         
-        // ********************
-        //  !! airMEMS_temp !!
-        // ********************
-		//        int i;
-		//        for(i = 0; i < 4; i++) {
-		//            cout << "p[" << i << "] = 0x";
-		//            cout << hex << (int)input[2][i];
-		//            cout << "\n";
-		//        }
-		//        cout << hex << "airLong[0] = 0x" << airLong[0] << "\n";
-		//        cout << dec << "air[0] = " << air[0] << "\n";
-        batteryLevelAir = 0x08;
-        timestampAir = 20;
-        // end airMEMS_temp
-		
-		//        batteryLevelAir = input[2][8] & 0x0F;
-		//        timestampAir = input[2][9] + (input[2][10] << 8);
-		
+        batteryLevelAir = input[2][9];
+        timestampAir = input[2][10] + (input[2][11] << 8);
+        linkQualityAir = input[2][12];
 	}
 }
 
