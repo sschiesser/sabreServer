@@ -14,9 +14,11 @@
 
 #include "ofMain.h"
 #include "ofxXmlSettings.h"
+#include "ofxOsc.h"
 
 #include "sabreKeys.h"
 #include "sabreMidiNote.h"
+#include "sabreAir.h"
 
 #define MAXNUM 64 // maximum number of input fields from serial stream
 #define PATTERNLENGTH 40 // maximumnumber of bytes in a message
@@ -43,7 +45,9 @@ public:
 	void parseAir();
 	void calcKeycode();
 	void calcHeadingTilt();
+    
 	void sendOSC();
+    
 	void draw();
 
 	ofSerial	serial;
@@ -52,10 +56,15 @@ public:
 	string str1;
 	
 	ofTrueTypeFont TTF;
-//	ofxOscSender sender;
+	ofxOscSender sender;
+    ofxOscMessage m[MAXNUM];
+
 	
 	vector <ofSerialDeviceInfo> deviceList;
 
+    string		sendIP;
+	int			sendport;
+    
 	string		serialport;
 	int			baudrate;
 	
@@ -70,10 +79,17 @@ public:
 	
 	unsigned char input[4][MAXNUM];         // for the four different types of packets
 	bool		haveInput[4];				// flags to signal a full packet was parsed successfully
-	
+	bool        fullspeedOSC;               // flag for outputting OSC from serial or from OSC thread 0 = OSC thread 1 = serialThread
+    
 	sabreKeys	keys[32];
 	sabreMidiNote midiNote[128];
-	
+    sabreAir    airValue;
+    
+//    bool        airCalibrationFlag;
+//    int         aircalibrationCounter;
+//    double      aircalibrationValue;
+//    bool        calibrateAirPressureRange;
+
 	int			numKeyAddr;
 	int			numImuAddr;
 	int			numButtonAddr;
@@ -157,7 +173,24 @@ public:
 	long		systime;
 	long		oldSystime;
 	long		systemTimestamp;
-	
+    
+    // OSC sender addresses
+	string		imuaddresses[12];
+	string		buttonaddresses[3];
+	string		airaddresses[2];
+    string      timestampAddressServer;
+	string		timestampAddressLeft;
+	string		timestampAddressRight;
+	string		timestampAddressAir;
+	string		keycodeaddress;
+	string		midinoteaddress;
+	string		headingaddress;
+    string      batteryAddressMain;
+    string      batteryAddressAir;
+    string      linkQualityAddressLeft;
+    string      linkQualityAddressRight;
+    string      linkQualityAddressAir;
+    
 };
 
 #endif

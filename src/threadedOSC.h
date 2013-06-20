@@ -14,7 +14,6 @@
 
 #include "ofMain.h"
 #include "ofxOsc.h"
-#include "ofxXmlSettings.h"
 
 #include "threadedSerial.h"
 
@@ -42,11 +41,9 @@ public:
 	
 	ofTrueTypeFont TTF;
 	ofxOscSender sender;
-	
+    
     string		sendIP;
 	int			sendport;
-	int			framerate;
-	int			receiveport;
 	
 	char		bytesRead[3];				// data from serial, we will be trying to read 3
 	char		bytesReadString[4];			// a string needs a null terminator, so we need 3 + 1 bytes
@@ -62,29 +59,11 @@ public:
 	int			numImuAddr;
 	int			numButtonAddr;
 	int			numAirAddr;
-	
-	// OSC sender stuff
-	string		imuaddresses[12];
-	string		buttonaddresses[3];
-	string		airaddresses[2];
-    string      timestampAddressServer;
-	string		timestampAddressLeft;
-	string		timestampAddressRight;
-	string		timestampAddressAir;
-	string		keycodeaddress;
-	string		midinoteaddress;
-	string		headingaddress;
-    string      batteryAddressMain;
-    string      batteryAddressAir;
-    string      linkQualityAddressLeft;
-    string      linkQualityAddressRight;
-    string      linkQualityAddressAir;
-		
-	string		address[64];
+
 	ofxOscMessage m[MAXNUM];
     
 	bool		senderStatus;
-    int         OSCSendingInterval;
+    int         OSCInterval;
 };
 
 #endif

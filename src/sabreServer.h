@@ -34,6 +34,9 @@ public:
     
 	void startOSC();
 	void stopOSC();
+    
+    void startOSCfullspeed();
+	void stopOSCfullspeed();
 	
 	void keyReleased(int key);	
 

@@ -40,22 +40,26 @@ threadedSerial::threadedSerial()
 	headingLowpassFactor = 0.2;
 	headingOld_x = headingOld_y = 0.0;
 	
-	// set the default address
-//	for(i = 0; i < 25; i++) {
-//		address[0] = "/sabre/key/"+ofToString(i)+"/continuous";
-//	}
-//    batteryAddressMain = "/sabre/battery/main";
-//    batteryAddressAir = "/sabre/battery/air";
-//    
-//    timestampAddressLeft = "/sabre/timestamp/left";
-//    timestampAddressRight = "/sabre/timestamp/right";
-//    timestampAddressAir = "/sabre/timestamp/air";
-	
 	TTF.loadFont("lucidagrande.ttf", 8, 1, 1, 0);
 	calibrateAll = 0;
 	for(i = 0; i < MAXNUM; i++) {
 		calibrate[i] = 0;
 	}
+    
+    batteryAddressMain = "/sabre/battery/main";
+    batteryAddressAir = "/sabre/battery/air";
+    
+    timestampAddressLeft = "/sabre/timestamp/left";
+    timestampAddressRight = "/sabre/timestamp/right";
+    timestampAddressAir = "/sabre/timestamp/air";
+    
+    linkQualityAddressLeft = "/sabre/linkquality/left";
+    linkQualityAddressRight = "/sabre/linkquality/right";
+    linkQualityAddressAir = "/sabre/linkquality/air";
+    
+    airValue.calibrationFlag = 0;
+    airValue.calibrationCounter = 0;
+    airValue.calibrationValue = 0.0;
 }
 
 threadedSerial::~threadedSerial()
@@ -86,10 +90,11 @@ void threadedSerial::threadedFunction()
 			haveInput[1] = 0;
 			haveInput[2] = 0;
 			
-			readSerial(); // this is the threaded serial polling call 
-//			sendOSC();
-			
-			ofSleepMillis(1);
+			readSerial(); // this is the threaded serial polling call
+            if(fullspeedOSC) {
+                sendOSC();
+            }
+            ofSleepMillis(1);
 			unlock();			
 		}
 	}
@@ -368,9 +373,9 @@ void threadedSerial::parseIMU()
 	if(haveInput[1]) {
 		
 		
-		raw[0] = input[1][15] + (input[1][18]  & 0xF8) << 5; // accel
-		raw[1] = input[1][16] + ((input[1][18] & 0x7 ) << 10) + ((input[1][19] & 0xC0) << 2);
-		raw[2] = input[1][17] + (input[1][19]  & 0x3E) << 7;
+		raw[0] = input[1][15] + (input[1][18] & 0xE0) << 3; // accel
+		raw[1] = input[1][16] + (input[1][18] & 0x1C) << 6;
+		raw[2] = input[1][17] + (input[1][19] & 0xE0) << 3;
 		
 		raw[3] = input[1][20] + (input[1][24] << 8); // gyro
 		raw[4] = input[1][21] + (input[1][25] << 8);
@@ -444,6 +449,44 @@ void threadedSerial::parseAir()
         batteryLevelAir = input[2][8] & 0xF;
         timestampAir = input[2][9] + (input[2][10] << 8);
         linkQualityAir = input[2][11];
+        
+        //collect atmospheric pressure value index 50-300 at each startup to have atmo-pressure offset 
+        if(airValue.calibrationFlag) {
+            if(airValue.calibrationCounter < 50) {
+                airValue.offset = air[0];
+            }else {
+                if(airValue.calibrationCounter < 300) {
+                    airValue.calibrationValue += air[0];
+                    airValue.offset = airValue.calibrationValue / (airValue.calibrationCounter - 50);
+                }
+                if(airValue.calibrationCounter >= 300){
+                    airValue.calibrationFlag = 0; // lock up after you
+                }
+            }
+            airValue.calibrationCounter++;
+        }
+        
+        
+        airValue.relative = air[0] - airValue.offset;
+        
+        if(airValue.calibratePressureRange) {
+            if(airValue.relative < airValue.minimum){
+                airValue.minimum = airValue.relative;
+            }
+            if(airValue.relative > airValue.maximum){
+                airValue.maximum = airValue.relative;
+            }
+            if(airValue.maximum > abs(airValue.minimum)) {
+                airValue.scale = ( 1.0 / airValue.maximum) * 0.5;
+            } else if(airValue.maximum < abs(airValue.minimum) ){
+                 airValue.scale = ( 1.0 / airValue.minimum) * 0.5;
+            }else{
+                airValue.scale = 0.0;
+            }
+        }
+        
+        airValue.continuous = airValue.relative * airValue.scale + 0.5;
+        airValue.continuous = CLAMP( airValue.continuous, 0.0, 1.0);
 	}
 }
 
@@ -506,188 +549,205 @@ void threadedSerial::calcHeadingTilt()
 	
 }
 
-//void threadedSerial::sendOSC()
-//{	
-//	// timestamps & keys
-//	if(haveInput[1] || haveInput[0]) { // right hand triggers sending
-//		
-//		
-//		m[25].clear();
-//		m[25].setAddress( timestampAddressRight ); // timestamp
-//        m[25].addIntArg( timestampRight );
-//		sender.sendMessage( m[25] );
-//		
-//		for(int i = 0; i < 25; i++) { // continuous key values
-//			if(keys[i].changed) {
-//				m[i].clear();
-//				m[i].setAddress( keys[i].oscaddress+"/continuous");
-//				m[i].addFloatArg( keys[i].continuous );
-//				sender.sendMessage( m[i] );
-//			}
-//		}
-//		for(int i = 0; i < 25; i++) { // binary key values
-//			if(keys[i].binaryChanged) {
-//				m[i].clear();
-//				m[i].setAddress( keys[i].oscaddress+"/down");
-//				m[i].addIntArg( keys[i].binary );
-//				sender.sendMessage( m[i] );
-//			}
-//		}	
-//		for(int i = 0; i < 25; i++) { // raw key values
-//			if(keys[i].changed) {
-//				m[i].clear();
-//				m[i].setAddress( keys[i].oscaddress+"/raw");
-//				m[i].addIntArg( keys[i].raw );
-//				sender.sendMessage( m[i] );
-//			}
-//		}	
-//		if(keycodeChanged) { // keycode
-//			m[0].clear();
-//			m[0].setAddress( keycodeaddress );
-//			m[0].addIntArg( keycode );
-//			sender.sendMessage( m[0] );
-//			keycodeChanged = false;
-//			// printf("sending keycode %d\n", keycode);
-//		}
-//		if(validMidiNote) {	
-//			m[0].clear();	// midinote derived from keycode
-//			m[0].setAddress( midinoteaddress );
-//			m[0].addIntArg( midinote );
-//			sender.sendMessage( m[0] );	
-//			validMidiNote = false;
-//		}
-//		for(int i = 0; i < 3; i++) { // buttons
-//			if(buttonChanged[i]) {
-//				m[i].clear();
-//				m[i].setAddress( buttonaddresses[2-i] );
-//				m[i].addIntArg( button[i] );
-//				sender.sendMessage( m[i] );	
-//			}
-//		}
-//		if(haveInput[0]) haveInput[0] = false;
-//        if(haveInput[1]) haveInput[1] = false;
-//    }
-//	//IMU
-//	if(haveInput[2]) {
-//        
-//        m[25].clear();
-//		m[25].setAddress( timestampAddressLeft ); // timestamp
-//        m[25].addIntArg( timestampLeft );
-//		sender.sendMessage( m[25] );
-//        
-//		systime = ofGetElapsedTimeMillis();
-//		systemTimestamp = systime - oldSystime;
-//		oldSystime = systime;
-//        
-//        m[13].clear();
-//		m[13].setAddress( timestampAddressServer ); // timestamp
-//        m[13].addIntArg( systemTimestamp );
-//		sender.sendMessage( m[13] );
-//		
-//		m[0].clear();
-//		m[0].setAddress( imuaddresses[0] ); // IMU accelero scaled
-//		m[0].addFloatArg( IMU[0] );
-//		m[0].addFloatArg( IMU[1] );
-//		m[0].addFloatArg( IMU[2] );
-//		sender.sendMessage( m[0] );	
-//		
-//		m[1].clear();
-//		m[1].setAddress( imuaddresses[1] ); // IMU gyro scaled
-//		m[1].addFloatArg( IMU[3] );
-//		m[1].addFloatArg( IMU[4] );
-//		m[1].addFloatArg( IMU[5] );
-//		sender.sendMessage( m[1] );	
-//		
-//		m[2].clear();
-//		m[2].setAddress( imuaddresses[2] ); // IMU magneto scaled
-//		m[2].addFloatArg( IMU[6] );
-//		m[2].addFloatArg( IMU[7] );
-//		m[2].addFloatArg( IMU[8] );
-//		sender.sendMessage( m[2] );	
-//		
-//		m[3].clear();
-//		m[3].setAddress( imuaddresses[3] ); // IMU accelero raw
-//		m[3].addFloatArg( rawIMU[0] );
-//		m[3].addFloatArg( rawIMU[1] );
-//		m[3].addFloatArg( rawIMU[2] );
-//		sender.sendMessage( m[3] );	
-//		
-//		m[4].clear();
-//		m[4].setAddress( imuaddresses[4] ); // IMU gyro raw
-//		m[4].addFloatArg( rawIMU[3] );
-//		m[4].addFloatArg( rawIMU[4] );
-//		m[4].addFloatArg( rawIMU[5] );
-//		sender.sendMessage( m[4] );	
-//		
-//		m[5].clear();
-//		m[5].setAddress( imuaddresses[5] ); // IMU magneto raw
-//		m[5].addFloatArg( rawIMU[6] );
-//		m[5].addFloatArg( rawIMU[7] );
-//		m[5].addFloatArg( rawIMU[8] );
-//		sender.sendMessage( m[5] );	
-//		
-//		m[6].clear();
-//		m[6].setAddress( imuaddresses[6] ); // IMU accelero summed
-//		m[6].addFloatArg( summedIMU[0] );
-//		sender.sendMessage( m[6] );	
-//		
-//		m[7].clear();
-//		m[7].setAddress( imuaddresses[7] ); // IMU gyro summed
-//		m[7].addFloatArg( summedIMU[1] );
-//		sender.sendMessage( m[7] );	
-//		
-//		m[8].clear();
-//		m[8].setAddress( imuaddresses[8] ); // IMU magneto summed
-//		m[8].addFloatArg( summedIMU[2] );
-//		sender.sendMessage( m[8] );
-//		
-//		m[9].clear();
-//		m[9].setAddress( imuaddresses[10] ); // IMU heading from accelerometer
-//		m[9].addFloatArg( heading );
-//		sender.sendMessage( m[9] );	
-//		
-//		m[10].clear();
-//		m[10].setAddress( imuaddresses[11] ); // IMU tilt from accelerometer
-//		m[10].addFloatArg( tilt );
-//		sender.sendMessage( m[10] );
-//		
-//		m[11].clear();
-//		m[11].setAddress( imuaddresses[9] ); // IMU temperature in degreee celsius 
-//		m[11].addFloatArg( IMU[9] );
-//		sender.sendMessage( m[11] );
-//        
-//        m[14].clear();
-//		m[14].setAddress( batteryAddressMain ); // air temperature
-//		m[14].addIntArg( batteryLevelRight );
-//		sender.sendMessage( m[14] );       
-//		
-//		haveInput[2] = false;
-//	}
-//	if(haveInput[3]) {
-//        
-//        m[25].clear();
-//		m[25].setAddress( timestampAddressAir ); // timestamp
-//        m[25].addIntArg( timestampAir );
-//		sender.sendMessage( m[25] );
-//		
-//		m[11].clear();
-//		m[11].setAddress( airaddresses[0] ); // air pressure
-//		m[11].addFloatArg( air[0]);
-//		sender.sendMessage( m[11] );	
-//		
-//		m[12].clear();
-//		m[12].setAddress( airaddresses[1] ); // air temperature
-//		m[12].addFloatArg( air[1]);
-//		sender.sendMessage( m[12] );
-//        
-//		m[13].clear();
-//		m[13].setAddress( batteryAddressAir ); // air temperature
-//		m[13].addIntArg( batteryLevelAir);
-//		sender.sendMessage( m[13] );        
-//		
-//		haveInput[3] = false;
-//	}
-//}
+void threadedSerial::sendOSC()
+{
+    
+    // timestamps & keys
+    if(haveInput[0] || haveInput[1]) { // both hands triggers sending
+    
+        // Keys
+        m[61].clear();
+        m[61].setAddress( timestampAddressRight ); // timestamp Right
+        m[61].addIntArg( timestampRight );
+        sender.sendMessage( m[61] );
+        
+        m[61].clear();
+        m[61].setAddress( timestampAddressLeft ); // timestamp Left
+        m[61].addIntArg( timestampLeft );
+        sender.sendMessage( m[61] );
+        
+        systime = ofGetElapsedTimeMillis();
+        systemTimestamp = systime - oldSystime;
+        oldSystime = systime;
+        
+        m[62].clear();
+        m[62].setAddress( timestampAddressServer ); // timestamp
+        m[62].addIntArg( systemTimestamp );
+        sender.sendMessage( m[62] );
+        
+        
+        for(int i = 0; i < 25; i++) { // continuous key values
+            if(keys[i].changed) {
+                m[i+16].clear();
+                m[i+16].setAddress( keys[i].oscaddress+"/continuous");
+                m[i+16].addFloatArg( keys[i].continuous );
+                sender.sendMessage( m[i+16] );
+            }
+        }
+        for(int i = 0; i < 25; i++) { // binary key values
+            if(keys[i].binaryChanged) {
+                m[i+16].clear();
+                m[i+16].setAddress( keys[i].oscaddress+"/down");
+                m[i+16].addIntArg( keys[i].binary );
+                sender.sendMessage( m[i+16] );
+            }
+        }
+        for(int i = 0; i < 25; i++) { // raw key values
+            if(keys[i].changed) {
+                m[i+16].clear();
+                m[i+16].setAddress( keys[i].oscaddress+"/raw");
+                m[i+16].addIntArg( keys[i].raw );
+                sender.sendMessage( m[i+16] );
+            }
+        }
+        if(keycodeChanged) { // keycode
+            m[42].clear();
+            m[42].setAddress( keycodeaddress );
+            m[42].addIntArg( keycode );
+            sender.sendMessage( m[42] );
+            keycodeChanged = false;
+            // printf("sending keycode %d\n", keycode);
+        }
+        if(validMidiNote) {
+            m[43].clear();	// midinote derived from keycode
+            m[43].setAddress( midinoteaddress );
+            m[43].addIntArg( midinote );
+            sender.sendMessage( m[43] );
+            validMidiNote = false;
+        }
+        for(int i = 0; i < 3; i++) { // buttons
+            if(buttonChanged[i]) {
+                m[i+44].clear();
+                m[i+44].setAddress( buttonaddresses[2-i] );
+                m[i+44].addIntArg( button[i] );
+                sender.sendMessage( m[i+44] );
+            }
+        }
+        
+        // IMU
+        m[0].clear();
+        m[0].setAddress( imuaddresses[0] ); // IMU accelero scaled
+        m[0].addFloatArg( IMU[0] );
+        m[0].addFloatArg( IMU[1] );
+        m[0].addFloatArg( IMU[2] );
+        sender.sendMessage( m[0] );
+        
+        m[1].clear();
+        m[1].setAddress( imuaddresses[1] ); // IMU gyro scaled
+        m[1].addFloatArg( IMU[3] );
+        m[1].addFloatArg( IMU[4] );
+        m[1].addFloatArg( IMU[5] );
+        sender.sendMessage( m[1] );
+        
+        m[2].clear();
+        m[2].setAddress( imuaddresses[2] ); // IMU magneto scaled
+        m[2].addFloatArg( IMU[6] );
+        m[2].addFloatArg( IMU[7] );
+        m[2].addFloatArg( IMU[8] );
+        sender.sendMessage( m[2] );
+        
+        m[3].clear();
+        m[3].setAddress( imuaddresses[3] ); // IMU accelero raw
+        m[3].addFloatArg( rawIMU[0] );
+        m[3].addFloatArg( rawIMU[1] );
+        m[3].addFloatArg( rawIMU[2] );
+        sender.sendMessage( m[3] );
+        
+        m[4].clear();
+        m[4].setAddress( imuaddresses[4] ); // IMU gyro raw
+        m[4].addFloatArg( rawIMU[3] );
+        m[4].addFloatArg( rawIMU[4] );
+        m[4].addFloatArg( rawIMU[5] );
+        sender.sendMessage( m[4] );
+        
+        m[5].clear();
+        m[5].setAddress( imuaddresses[5] ); // IMU magneto raw
+        m[5].addFloatArg( rawIMU[6] );
+        m[5].addFloatArg( rawIMU[7] );
+        m[5].addFloatArg( rawIMU[8] );
+        sender.sendMessage( m[5] );
+        
+        m[6].clear();
+        m[6].setAddress( imuaddresses[6] ); // IMU accelero summed
+        m[6].addFloatArg( summedIMU[0] );
+        sender.sendMessage( m[6] );
+        
+        m[7].clear();
+        m[7].setAddress( imuaddresses[7] ); // IMU gyro summed
+        m[7].addFloatArg( summedIMU[1] );
+        sender.sendMessage( m[7] );
+        
+        m[8].clear();
+        m[8].setAddress( imuaddresses[8] ); // IMU magneto summed
+        m[8].addFloatArg( summedIMU[2] );
+        sender.sendMessage( m[8] );
+        
+        m[9].clear();
+        m[9].setAddress( imuaddresses[10] ); // IMU heading from accelerometer
+        m[9].addFloatArg( heading );
+        sender.sendMessage( m[9] );
+        
+        m[10].clear();
+        m[10].setAddress( imuaddresses[11] ); // IMU tilt from accelerometer
+        m[10].addFloatArg( tilt );
+        sender.sendMessage( m[10] );
+        
+        m[11].clear();
+        m[11].setAddress( imuaddresses[9] ); // IMU temperature in degreee celsius
+        m[11].addFloatArg( IMU[9] );
+        sender.sendMessage( m[11] );
+        
+        m[12].clear();
+        m[12].setAddress( batteryAddressMain ); // battery level main
+        m[12].addIntArg( batteryLevelRight );
+        sender.sendMessage( m[12] );
+        
+        m[13].clear();
+        m[13].setAddress( linkQualityAddressLeft ); // left link quality
+        m[13].addIntArg( linkQualityLeft );
+        sender.sendMessage( m[13] );
+        
+        m[14].clear();
+        m[14].setAddress( linkQualityAddressRight ); // right link quality
+        m[14].addIntArg( linkQualityRight );
+        sender.sendMessage( m[14] );
+        
+        // reset flags
+        if(haveInput[0]) haveInput[0] = false;
+        if(haveInput[1]) haveInput[1] = false;
+    
+    }
+    if(haveInput[2]) { // AirMems packet
+    
+        m[63].clear();
+        m[63].setAddress( timestampAddressAir ); // timestamp
+        m[63].addIntArg( timestampAir );
+        sender.sendMessage( m[63] );
+        
+        m[48].clear();
+        m[48].setAddress( airaddresses[0] ); // air pressure
+        m[48].addFloatArg( airValue.continuous);
+        sender.sendMessage( m[48] );
+        
+        m[49].clear();
+        m[49].setAddress( airaddresses[1] ); // air temperature
+        m[49].addFloatArg( air[1]);
+        sender.sendMessage( m[49] );
+        
+        m[50].clear();
+        m[50].setAddress( batteryAddressAir ); // air battery
+        m[50].addIntArg( batteryLevelAir);
+        sender.sendMessage( m[50] );
+        
+        m[51].clear();
+        m[51].setAddress( linkQualityAddressAir ); // air link quality
+        m[51].addIntArg( linkQualityAir);
+        sender.sendMessage( m[51] );
+        
+        // reset flag
+        haveInput[2] = false;
+    }
+}
 
 void threadedSerial::draw()
 {
