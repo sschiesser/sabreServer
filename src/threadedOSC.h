@@ -40,7 +40,9 @@ public:
 	string str1;
 	
 	ofTrueTypeFont TTF;
-	ofxOscSender sender;
+	ofxOscSender oscSender;
+    ofxOscMessage oscMsg[MAXNUM];
+
     
     string		sendIP;
 	int			sendport;
@@ -60,7 +62,6 @@ public:
 	int			numButtonAddr;
 	int			numAirAddr;
 
-	ofxOscMessage m[MAXNUM];
     
 	bool		senderStatus;
     int         OSCInterval;

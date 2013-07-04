@@ -2,7 +2,7 @@
  *  testApp.h
  * 
  *  SABRe-server
- *  © 2012 ICST / ZHdK  
+ *  © 2012/2013 ICST / ZHdK  
  *
  *  @author Jan Schacher
  *  @date 20130617

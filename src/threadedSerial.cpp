@@ -15,6 +15,10 @@ threadedSerial::threadedSerial()
 {
 	int i;
 	
+    streamSize[0] = PATTERNLENGTH_1;
+    streamSize[1] = PATTERNLENGTH_2;
+    streamSize[2] = PATTERNLENGTH_3;
+    
 	scale10 = 1.0 / 1024.0;
 	scale11 = 1.0 / 2048.0;
 	scale12 = 1.0 / 4096.0;
@@ -64,7 +68,6 @@ threadedSerial::threadedSerial()
 
 threadedSerial::~threadedSerial()
 {
-	
 	if( isThreadRunning() ) { 
 		stopThread();
 	}
@@ -94,8 +97,9 @@ void threadedSerial::threadedFunction()
             if(fullspeedOSC) {
                 sendOSC();
             }
-            ofSleepMillis(1);
-			unlock();			
+//            ofSleepMillis(1);
+            usleep(500);	//mac sleeps in microseconds = 1/2 millisecond interval for serialThread
+			unlock();
 		}
 	}
 }
@@ -106,56 +110,76 @@ void threadedSerial::readSerial()
 	long nRead  = 0;	
 	unsigned char bytesReturned[1];
 	
+    // read the entire content of the serial buffer into the serailStream and input arrays
 	while( (nRead = serial.readBytes(bytesReturned, 1)) > 0){
-		nTimesRead++;	
-		nBytesRead = nRead;
+//		nTimesRead++;	
+//		nBytesRead = nRead;
 		serialparse(bytesReturned);
 	}
 }
 
 void threadedSerial::serialparse(unsigned char *c)
 {
-	long i;
+	int i, j;
 	long sum;
-	int size = PATTERNLENGTH;
 	
-	// push bytes forward in the circular buffer "serialStream"
-	for (i = 0; i < size-1; i++) {
-		serialStream[i] = serialStream[i+1];
-	}
-	serialStream[size-1] = c[0]; // append new byte to buffer
-	
+    // do the circular buffer thing three time independently
+    for (j = 0; j < 3; j++) {
+        
+        // push bytes forward in the three circular buffers "serialStream[j]"
+        for (i = 0; i < streamSize[j]-1; i++) {
+            serialStream[j][i] = serialStream[j][i+1];
+        }
+        serialStream[j][streamSize[j]-1] = c[0]; // append new byte to each serialStream[j] buffer
+        
+    }
+
 	// pattern matching
-	if (serialStream[0] == 65) { // packet start marker
-        if(serialStream[1] == 240) {	// left hand packet
-            if(serialStream[22] == 90) {
-                for(i = 0; i < 20; i++) {
-                    input[0][i] = serialStream[i+2];
+	if (serialStream[0][0] == 65) { // packet start marker
+        if(serialStream[0][1] == 240) {	// left hand packet
+            if(serialStream[0][22] == 90) {
+//                printf("\ninput 0 ");
+
+                for(i = 0; i < 20; i++) { // collect n-2 bytes into buffer
+                    input[0][i] = serialStream[0][i+2];
+//                    printf("%x ", input[0][i]);
                 }
                 haveInput[0] = true;
                 parseLeft();
                 calcKeycode();
             }
-        } else if(serialStream[1] == 241) { // right hand packet
-            if(serialStream[38] == 90) {
-                for(i = 0; i < 36; i++) {
-                    input[1][i] = serialStream[i+2];
+        }
+    }
+    
+    if (serialStream[1][0] == 65) { // packet start marker
+        if(serialStream[1][1] == 241) { // right hand packet
+            if(serialStream[1][38] == 90) {
+//                printf("\ninput 1 ");
+                for(i = 0; i < 36; i++) { // collect n-2 bytes into buffer
+                    input[1][i] = serialStream[1][i+2];
+//                    printf("%x ", input[1][i]);
                 }
                 haveInput[1] = true;
                 parseRight();
-                parseIMU();
                 calcKeycode();
+                parseIMU();
             }
-        } else if(serialStream[1] == 242) { // AirMems packet
-            if(serialStream[14] == 90) {
-                for(i = 0; i < 13; i++) {
-                    input[2][i] = serialStream[i+2];
+        }
+    }
+    
+    if (serialStream[2][0] == 65) { // packet start marker
+        if(serialStream[2][1] == 242) { // AirMems packet
+            if(serialStream[2][14] == 90) {
+//                printf("\ninput 2 ");
+                for(i = 0; i < 12; i++) { // collect n-2 bytes into buffer
+                    input[2][i] = serialStream[2][i+2];
+//                    printf("%x ", input[2][i]);
                 }
                 haveInput[2] = true;
                 parseAir();
            }
-        } // end airMEMS
-    } // end patternmatching
+        }
+    }
 }
 
 void threadedSerial::parseLeft()
@@ -170,14 +194,17 @@ void threadedSerial::parseLeft()
 		keys[1].raw = input[0][1];
 		keys[2].raw = input[0][2];
 		keys[3].raw = input[0][3];
+        
 		keys[4].raw = input[0][4];
 		keys[5].raw = input[0][5];
 		keys[6].raw = input[0][6];
 		keys[7].raw = input[0][7];
+        
 		keys[8].raw = input[0][8];
         keys[9].raw = input[0][9];
         keys[10].raw = input[0][10];
         keys[11].raw = input[0][11];
+        
         keys[12].raw = input[0][12];
         
 		keys[0].raw += (input[0][13] & 0xC0) << 2;
@@ -196,6 +223,11 @@ void threadedSerial::parseLeft()
         keys[11].raw += (input[0][15] & 0x3) << 8;
         
         keys[12].raw += (input[0][16] & 0xC0) << 2;
+
+//        printf("\nraw left ");
+//        for (int i = 0; i < 13; i++) { // 13 keys
+//            printf("%lx ", keys[i].raw);
+//        }
 
         
         int now = ofGetElapsedTimeMillis();
@@ -282,29 +314,31 @@ void threadedSerial::parseRight()
 		keys[14].raw = input[1][1];
 		keys[15].raw = input[1][2];
 		keys[16].raw = input[1][3];
+        
 		keys[17].raw = input[1][4];
 		keys[18].raw = input[1][5];
 		keys[19].raw = input[1][6];
 		keys[20].raw = input[1][7];
+        
 		keys[21].raw = input[1][8];
         keys[22].raw = input[1][9];
         keys[23].raw = input[1][10];
         keys[24].raw = input[1][11];
         
-		keys[13].raw += (input[1][12] & 0xC0) << 2;
-		keys[14].raw += (input[1][12] & 0x30) << 4;
-		keys[15].raw += (input[1][12] & 0xC) << 6;
-        keys[16].raw += (input[1][12] & 0x3) << 8;
+		keys[13].raw += ((input[1][12] & 0xC0) << 2);
+		keys[14].raw += ((input[1][12] & 0x30) << 4);
+		keys[15].raw += ((input[1][12] & 0xC) << 6);
+        keys[16].raw += ((input[1][12] & 0x3) << 8);
         
-        keys[17].raw += (input[1][13] & 0xC0) << 2;
-		keys[18].raw += (input[1][13] & 0x30) << 4;
-		keys[19].raw += (input[1][13] & 0xC) << 6;
-        keys[20].raw += (input[1][13] & 0x3) << 8;
+        keys[17].raw += ((input[1][13] & 0xC0) << 2);
+		keys[18].raw += ((input[1][13] & 0x30) << 4);
+		keys[19].raw += ((input[1][13] & 0xC) << 6);
+        keys[20].raw += ((input[1][13] & 0x3) << 8);
         
-        keys[21].raw += (input[1][14] & 0xC0) << 2;
-		keys[22].raw += (input[1][14] & 0x30) << 4;
-		keys[23].raw += (input[1][14] & 0xC) << 6;
-        keys[24].raw += (input[1][14] & 0x3) << 8;
+        keys[21].raw += ((input[1][14] & 0xC0) << 2);
+		keys[22].raw += ((input[1][14] & 0x30) << 4);
+		keys[23].raw += ((input[1][14] & 0xC) << 6);
+        keys[24].raw += ((input[1][14] & 0x3) << 8);
          
 		int now = ofGetElapsedTimeMillis();
 		
@@ -373,15 +407,15 @@ void threadedSerial::parseIMU()
 	if(haveInput[1]) {
 		
 		
-		raw[0] = input[1][15] + (input[1][18] & 0xE0) << 3; // accel
-		raw[1] = input[1][16] + (input[1][18] & 0x1C) << 6;
-		raw[2] = input[1][17] + (input[1][19] & 0xE0) << 3;
+		raw[0] = input[1][15] + ((input[1][18] & 0xE0) << 3); // accel
+		raw[1] = input[1][16] + ((input[1][18] & 0x1C) << 6);
+		raw[2] = input[1][17] + ((input[1][19] & 0xE0) << 3);
 		
 		raw[3] = input[1][20] + (input[1][24] << 8); // gyro
 		raw[4] = input[1][21] + (input[1][25] << 8);
 		raw[5] = input[1][22] + (input[1][26] << 8);
 
-		raw[9] = input[1][23] + (input[1][27] * 256); // temp
+		raw[9] = input[1][23] + (input[1][27] << 8); // temp
 		
 		raw[6] = input[1][28] + ((input[1][31] & 0xF0) << 4); // compass / magneto
 		raw[7] = input[1][29] + ((input[1][31] & 0xF ) << 8);
@@ -767,13 +801,13 @@ void threadedSerial::draw()
 	
 	if( lock() )
 	{
-		if (status == 1) 
+		if (status == 1 && drawValues)
 		{
 			ofFill();
 			ofSetColor(200, 200, 200, 255);
 			ofRect(leftColumn-1, 79, width-leftColumn-5, height-anchory-15);
 			
-			for(i = 0; i < 35; i++) { // stripes
+			for(i = 0; i < 25; i++) { // stripes
 				if((i % 2) == 0){
 					ofFill();
 					ofSetColor(216, 216, 216, 255);
@@ -781,11 +815,22 @@ void threadedSerial::draw()
 					ofSetColor(0, 0, 0, 255);
 				}			
 			}
-			
+            
+            for(i = 0; i < 12; i++) { // stripes
+				if((i % 3) == 0){
+					ofFill();
+					ofSetColor(216, 216, 216, 255);
+					ofRect(leftColumn-1+430, anchory+((i-1) * stepsize)+7, width-leftColumn-12, 16);
+					ofSetColor(0, 0, 0, 255);
+				}
+			}
+            
+//            printf("\ndraw raw ");
 			for(i = 0; i < 25; i++) { // keys
 				ofSetColor(0, 0, 0, 255);
 				yy = anchory+(i * stepsize);
 				TTF.drawString(ofToString(keys[i].raw, 6), leftColumn, yy );
+//                printf("%lx ", keys[i].raw);
 				TTF.drawString(ofToString(keys[i].continuous, 6), midColumn, yy);
 				ofNoFill();
 				ofSetColor(91, 91, 91, 255);
@@ -817,81 +862,77 @@ void threadedSerial::draw()
 			}
 			for(i = 0; i < 9; i++) { // imu
 				ofSetColor(0, 0, 0, 255);
-				yy = anchory+((i+25) * stepsize);
-				TTF.drawString( ofToString(raw[i], 6) , leftColumn, yy );
-				TTF.drawString(ofToString(IMU[i], 6), midColumn, yy);
+//				yy = anchory+((i+25) * stepsize);
+				yy = anchory+((i) * stepsize);
+				TTF.drawString( ofToString(raw[i], 6) , leftColumn+430, yy );
+				TTF.drawString(ofToString(IMU[i], 6), midColumn+430, yy);
 				ofNoFill();
 				ofSetColor(91, 91,91, 255);
-				ofRect(rightColumn, yy-9, 104, 12);
+				ofRect(rightColumn+430, yy-9, 104, 12);
 				ofFill();
 				ofSetColor(0, 0, 0, 255);
-				ofRect( rightColumn + (104 * IMU[i]), yy-9, 2, 12);
+				ofRect( rightColumn+430 + (104 * IMU[i]), yy-9, 2, 12);
 				ofNoFill();
 				ofSetColor(91, 91, 91, 255);
-				ofLine(rightColumn+52, yy-9, rightColumn+52, yy+4);
+				ofLine(rightColumn+52+430, yy-9, rightColumn+52+430, yy+4);
 			}	
 			// air 
 			ofSetColor(0, 0, 0, 255);
-			yy = anchory+(34 * stepsize);
-			TTF.drawString(ofToString(airLong[0], 1), leftColumn, yy );
-			TTF.drawString(ofToString(air[0], 2), midColumn, yy);
+//			yy = anchory+(34 * stepsize);
+			yy = anchory+(9 * stepsize);
+			TTF.drawString(ofToString(airLong[0], 1), leftColumn+430, yy );
+			TTF.drawString(ofToString(air[0], 2), midColumn+430, yy);
 			
 			ofNoFill();
 			ofSetColor(91, 91, 91, 255);
-			ofRect(rightColumn, yy-9, 104, 12);
+			ofRect(rightColumn+430, yy-9, 104, 12);
 			ofFill();
 			ofSetColor(0, 0, 0, 127);
-			ofRect( rightColumn + (104 * (CLAMP( ((air[0] - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
+			ofRect( rightColumn+430 + (104 * (CLAMP( ((air[0] - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
 			
 			// buttons
 			ofSetColor(0, 0, 0, 255);
-			yy = anchory+((35) * stepsize);
-			TTF.drawString( ofToString(button[2], 1), leftColumn, yy );
-			TTF.drawString( ofToString(button[1], 1), leftColumn+12, yy );
-			TTF.drawString( ofToString(button[0], 1), leftColumn+24, yy );
+//			yy = anchory+((35) * stepsize);
+			yy = anchory+((10) * stepsize);
+			TTF.drawString( ofToString(button[2], 1), leftColumn+430, yy );
+			TTF.drawString( ofToString(button[1], 1), leftColumn+12+430, yy );
+			TTF.drawString( ofToString(button[0], 1), leftColumn+24+430, yy );
             
 			ofNoFill();
 			ofSetColor(91, 91, 91, 255);
-			ofRect(midColumn, yy-9, 12, 12);			
-			ofRect(midColumn+14, yy-9, 12, 12);
-			ofRect(midColumn+28, yy-9, 12, 12);
+			ofRect(midColumn+430, yy-9, 12, 12);			
+			ofRect(midColumn+14+430, yy-9, 12, 12);
+			ofRect(midColumn+28+430, yy-9, 12, 12);
 			
 			ofFill();
 			ofSetColor(0, 0, 0, 255);
 			if(button[2]) {
-				ofRect(midColumn+2, yy-6, 7, 7);
+				ofRect(midColumn+2+430, yy-6, 7, 7);
 			}				
 			if(button[1]) {
-				ofRect(midColumn+16, yy-6, 7, 7);
+				ofRect(midColumn+16+430, yy-6, 7, 7);
 			}
 			if(button[0]) {
-				ofRect(midColumn+30, yy-6, 7, 7);
+				ofRect(midColumn+30+430, yy-6, 7, 7);
 			}
             
 			// battery
-            ofSetColor(0, 0, 0, 255);
-			yy = anchory+((36) * stepsize);
-			TTF.drawString( "main: "+ofToString((int)(batteryLevelRight*12.5))+"%", anchorx+82, yy );
-			TTF.drawString( "mouthpiece: "+ofToString((int)(batteryLevelAir*12.5))+"%", leftColumn+12, yy );
+//            ofSetColor(0, 0, 0, 255);
+////			yy = anchory+((36) * stepsize);
+//            yy = 40;
+//			TTF.drawString( "main: "+ofToString((int)(batteryLevelRight*12.5))+"%", anchorx+82+430, yy );
+//			TTF.drawString( "mouthpiece: "+ofToString((int)(batteryLevelAir*12.5))+"%", leftColumn+12+430, yy );
             
 			if(calibrateAll) {
 				ofFill();
 				ofSetColor(255, 127, 0);
-				ofRect(rightColumn, 690, 124, 20);
+				ofRect(440, 480, 124, 20);
 				ofNoFill();
 				ofSetColor(127, 127, 127);
-				ofRect(rightColumn, 690, 124, 20);
+				ofRect(440, 480, 124, 20);
 				ofSetColor(0, 0, 0);
-				TTF.drawString("Calibrating...", rightColumn+28, 704);
+				TTF.drawString("Calibrating...", 440+28, 480+14);
 			}
-			ofFill();
-			ofSetColor(232, 232, 232);
-			ofRect(rightColumn, 23, 124, 20);
-			ofNoFill();
-			ofSetColor(127, 127, 127);
-			ofRect(rightColumn, 23, 124, 20);
-			ofSetColor(0, 0, 0);		
-			TTF.drawString("Hide Values", rightColumn+32, 38);
 		}
 		unlock();
 	}else{

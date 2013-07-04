@@ -20,8 +20,10 @@
 #include "sabreMidiNote.h"
 #include "sabreAir.h"
 
-#define MAXNUM 64 // maximum number of input fields from serial stream
-#define PATTERNLENGTH 40 // maximumnumber of bytes in a message
+#define MAXNUM 64 // maximum number messages to allocate
+#define PATTERNLENGTH_1 23 // maximumnumber of bytes in a left hand message
+#define PATTERNLENGTH_2 39 // maximumnumber of bytes in a right hand message
+#define PATTERNLENGTH_3 15 // maximumnumber of bytes in a air-mems message
 #define FILTER_CHANGE // comment out in order to build without the redundancy check
 
 class threadedSerial : public ofThread
@@ -58,8 +60,6 @@ public:
 	ofTrueTypeFont TTF;
 	ofxOscSender sender;
     ofxOscMessage m[MAXNUM];
-
-	
 	vector <ofSerialDeviceInfo> deviceList;
 
     string		sendIP;
@@ -74,11 +74,12 @@ public:
 	int			nBytesRead;					// how much did we read?
 	int			nTimesRead;					// how many times did we read?
 	float		readTime;					// when did we last read?		
-	
-	unsigned char serialStream[PATTERNLENGTH];
-	
-	unsigned char input[4][MAXNUM];         // for the four different types of packets
-	bool		haveInput[4];				// flags to signal a full packet was parsed successfully
+	 
+	unsigned char serialStream[3][PATTERNLENGTH_2]; // the size of the largest expected packet 
+	int         streamSize[3];
+    
+	unsigned char input[3][PATTERNLENGTH_2];    // working buffer for each packet type
+	bool		haveInput[3];				// flags to signal a full packet was parsed successfully
 	bool        fullspeedOSC;               // flag for outputting OSC from serial or from OSC thread 0 = OSC thread 1 = serialThread
     
 	sabreKeys	keys[32];
@@ -190,6 +191,8 @@ public:
     string      linkQualityAddressLeft;
     string      linkQualityAddressRight;
     string      linkQualityAddressAir;
+    
+    bool        drawValues;
     
 };
 

@@ -2,7 +2,7 @@
  *  sabreServer.cpp
  * 
  *  SABRe-server
- *  © 2012 ICST / ZHdK  
+ *  © 2012/2013 ICST / ZHdK  
  *
  *  @author Jan Schacher
  *  @date 20120617
@@ -15,7 +15,7 @@ void sabreServer::setup()
 {
 	ofSetEscapeQuitsApp(false);
 	ofEnableAlphaBlending();
-	titleString = "sabreServer v 0.9a1";
+	titleString = "sabreServer version 0.9a1";
 	
 	serialThreadObject = new(threadedSerial);
 	OSCThreadObject = new(threadedOSC);
@@ -30,6 +30,7 @@ void sabreServer::setup()
 	
 	windowChanged = 1;
 	drawValues = 0;
+    serialThreadObject->drawValues = 0;
 	menuState = 0;
 	
 	serialThreadObject->serialport = "/dev/tty.usbserial-A7005Ghs";
@@ -65,9 +66,12 @@ void sabreServer::setup()
 	
  	getSerialDeviceList();
 	
-//	startSerial();
-	startOSC();
-	
+	startSerial();
+    if(serialThreadObject->fullspeedOSC){
+        startOSCfullspeed();
+    }else{
+        startOSC();
+	}
 	ofSetWindowPosition(0,44);
 
     dumpPrefs();
@@ -78,14 +82,14 @@ void sabreServer::update()
 {
 	float now = ofGetElapsedTimef();
 	
-	if(runOnce == 1) {
-		if(now > (runOnceStart + runOnceDelay) )
-		{
+//	if(runOnce == 1) {
+//		if(now > (runOnceStart + runOnceDelay) )
+//		{
 //            startSerial();
 //            startOSC();
-            runOnce = 0;
-		}
-	}
+//            runOnce = 0;
+//		}
+//	}
 	receiveOSC();
 }
 
@@ -105,17 +109,16 @@ void sabreServer::draw()
 	
 	if(windowChanged == 1) {
 		if(drawValues == 0) {
-			width = 430;
+			width = 850;
 			height = 49;
 			ofSetWindowShape(width, height);
 			windowChanged = 0;
 		} else if(drawValues == 1) {
-			width = 430;
-			height = 722; // 790
+			width = 850;
+			height = 514; // 790
 			timeOut = 5.0;
 			ofSetWindowShape(width, height);
 			windowChanged = 0;
-
 		}
 	}
 	
@@ -131,12 +134,12 @@ void sabreServer::draw()
 		ofRect(0, 0, width, height);
 		
 		if(serialThreadObject->status) {
-			ofSetColor(255, 255, 255, 255);
+			ofSetColor(0, 0, 0, 255);
 		} else {
-			ofSetColor(192, 192, 192, 255);
+			ofSetColor(127, 127, 127, 255);
 		}
 		TTF.drawString(status1, anchorx, 18);
-		TTF.drawString(status2, anchorx,  38);
+		TTF.drawString(status2, anchorx, 38);
 
 		// separator lines
 		ofSetColor(240, 240, 240, 127);
@@ -181,58 +184,81 @@ void sabreServer::draw()
 		}
 		
 		// show values button
-		ofFill();
-		ofSetColor(208, 208, 208);
-		ofRect(rightColumn, 23, 124, 20);
-		ofNoFill();
-		ofSetColor(127, 127, 127);
-		ofRect(rightColumn, 23, 124, 20);
-		ofSetColor(0, 0, 0);		
-		TTFsmall.drawString("Show Values", rightColumn+28, 38);
-		
+        if( !drawValues ) {
+            ofFill();
+            ofSetColor(208, 208, 208);
+            ofRect(rightColumn+126, 3, 124, 18);
+            ofNoFill();
+            ofSetColor(127, 127, 127);
+            ofRect(rightColumn+126, 3, 124, 18);
+            ofSetColor(0, 0, 0);		
+            TTFsmall.drawString("Show Values", rightColumn+28+126, 16);
+        }else{
+            ofFill();
+            ofSetColor(232, 232, 232);
+            ofRect(rightColumn+126, 3, 124, 18);
+            ofNoFill();
+            ofSetColor(127, 127, 127);
+            ofRect(rightColumn+126, 3, 124, 18);
+            ofSetColor(0, 0, 0);
+            TTF.drawString("Hide Values", rightColumn+32+126, 16);
+		}
 		// Calibrate Button
 		ofFill();
 		ofSetColor(208, 208, 208);
-		ofRect(rightColumn, 690, 124, 20);
+		ofRect(440, 480, 124, 20);
 		ofNoFill();
 		ofSetColor(127, 127, 127);
-		ofRect(rightColumn, 690, 124, 20);
+		ofRect(440, 480, 124, 20);
 		ofSetColor(0, 0, 0);
-		TTFsmall.drawString("Calibrate", rightColumn+40, 704);
+		TTFsmall.drawString("Calibrate", 440+40, 480+14);
 
 		
 		// value display left column
-		for(i = 0; i < 36; i++) { // stripes
+		for(i = 0; i < 25; i++) { // stripes
 			if((i % 2) == 0){
 				ofFill();
 				ofSetColor(216, 216, 216, 255);
 				ofRect(anchorx-2, anchory+((i-1) * stepsize)+7, 141, 16);
 				ofSetColor(0, 0, 0, 255);
 			}			
-		}		
+		}
+		
+        for(i = 0; i < 12; i++) { // stripes
+			if((i % 3) == 0){
+				ofFill();
+				ofSetColor(216, 216, 216, 255);
+				ofRect(anchorx-2+430, anchory+((i-1) * stepsize)+7, 141, 16);
+				ofSetColor(0, 0, 0, 255);
+			}
+		}
 		
 		ofSetColor(0, 0, 0, 191);
 		for(i = 0; i < 25; i++) { // key addresses
 			TTFsmall.drawString(serialThreadObject->keys[i].oscaddress, anchorx, anchory+((i) * stepsize) );
 		}
 		for(i = 0; i < 9; i++) { // imu addresses
-
 			std::string str = serialThreadObject->imuaddresses[i/3];
 			std::string::size_type end = str.find_last_of('/');
 			if(end != str.npos)
 				str = str.substr(0, end);
-			TTFsmall.drawString(str, anchorx, anchory+((i+25) * stepsize) );
+			TTFsmall.drawString(str, anchorx+430, anchory+((i) * stepsize) );
+//			TTFsmall.drawString(str, anchorx+430, anchory+((i+25) * stepsize) );
 //			TTFsmall.drawString(serialThreadObject->imuaddresses[i/3], anchorx, anchory+5+((i+25) * stepsize) );
 		}
-		TTFsmall.drawString(serialThreadObject->airaddresses[0], anchorx, anchory+(34 * stepsize) );
+		TTFsmall.drawString(serialThreadObject->airaddresses[0], anchorx+430, anchory+(9 * stepsize) );
 		for(i = 0; i < 1; i++) { // first button address truncated
 			char temp[64];
 			strncpy(temp, serialThreadObject->buttonaddresses[0].c_str(), serialThreadObject->buttonaddresses[0].size()-2);
 			temp[serialThreadObject->buttonaddresses[0].size()-2] = 0;
-			TTFsmall.drawString(temp, anchorx, anchory+((i+35) * stepsize) );
+//			TTFsmall.drawString(temp, anchorx+430, anchory+((i+35) * stepsize) );
+			TTFsmall.drawString(temp, anchorx+430, anchory+((i+10) * stepsize) );
 		}
         // battery
-        TTFsmall.drawString("battery level", anchorx, anchory+((i+35) * stepsize) );
+        //        TTFsmall.drawString("battery level", anchorx, anchory+((i+35) * stepsize) );
+        TTFsmall.drawString("battery levels:", 296, 40);
+//        TTF.drawString( "main: "+ofToString((int)(serialThreadObject->batteryLevelRight*12.5))+"%", 380, 40 );
+//        TTF.drawString( "mouthpiece: "+ofToString((int)(serialThreadObject->batteryLevelAir*12.5))+"%", 440, 40 );
 
 		texScreen.loadScreenData(0,0, 440, 700);
 		drawTex = 1;
@@ -243,7 +269,9 @@ void sabreServer::draw()
 		}
 		
 	}
-	
+    TTF.drawString( "main: "+ofToString((int)(serialThreadObject->batteryLevelRight*12.5))+"%", 380, 40 );
+    TTF.drawString( "mouthpiece: "+ofToString((int)(serialThreadObject->batteryLevelAir*12.5))+"%", 440, 40 );
+
 	if(drawValues) {
 		serialThreadObject->draw();
 	}
@@ -273,6 +301,7 @@ void sabreServer::draw()
 		ofSetColor(127, 127, 127);
 		ofRect(leftColumn, 21, 188, numMenuItems*18);
 	}
+    
 }
 
 void sabreServer::exit()
@@ -330,15 +359,14 @@ void sabreServer::startOSC()
 	if(OSCThreadObject->status) {
         OSCThreadObject->stop(); // stops the thread, deletes the object which also closes the socket
 	}
-    
     // open an outgoing connection to sendIP:PORT
-	OSCThreadObject->status = OSCThreadObject->sender.setup( OSCThreadObject->sendIP.c_str(), OSCThreadObject->sendport);
+	OSCThreadObject->status = OSCThreadObject->oscSender.setup( serialThreadObject->sendIP.c_str(), serialThreadObject->sendport);
 	if(OSCThreadObject->status) {
         OSCThreadObject->start(); // the OSC thread
-		status2 = "Sending OSC to "+OSCThreadObject->sendIP+" on port "+ofToString(OSCThreadObject->sendport);
+		status2 = "Sending OSC to "+serialThreadObject->sendIP+" on port "+ofToString(serialThreadObject->sendport);
 	} else {
-        ofSystemAlertDialog("Sabre Server Unable to open Network "+OSCThreadObject->sendIP+" on port "+ofToString(OSCThreadObject->sendport));
-		status2 = "Unable to open Network "+OSCThreadObject->sendIP+" on port "+ofToString(OSCThreadObject->sendport);
+        ofSystemAlertDialog("Sabre Server Unable to open Network "+serialThreadObject->sendIP+" on port "+ofToString(serialThreadObject->sendport));
+		status2 = "Unable to open Network "+serialThreadObject->sendIP+" on port "+ofToString(serialThreadObject->sendport);
 	}
 	redrawFlag = 1;
 }
@@ -354,8 +382,8 @@ void sabreServer::stopOSC()
 
 void sabreServer::startOSCfullspeed()
 {
-	if(OSCThreadObject->status) {
-        OSCThreadObject->stop(); // stops the thread, deletes the object which also closes the socket
+	if(serialThreadObject->status) {
+        serialThreadObject->stop(); // stops the thread, deletes the object which also closes the socket
 	}
     
     // open an outgoing connection to sendIP:PORT
@@ -490,14 +518,14 @@ bool sabreServer::readPrefs()
 		serialThreadObject->baudrate = XML.getValue("sabre:baudrate", 57600);
 		framerate = XML.getValue("sabre:framerate", 20);
 		drawValues = XML.getValue("sabre:display", 0);
-		drawValues = CLAMP(drawValues, 0, 1);
+        serialThreadObject->drawValues = drawValues = CLAMP(drawValues, 0, 1);
 		
 		serialThreadObject->threshDown = XML.getValue("sabre:thresholds:down", 0.2);
 		serialThreadObject->threshUp = XML.getValue("sabre:thresholds:up", 0.8);
 		serialThreadObject->debounceTimeOut = XML.getValue("sabre:debounce-timeout", 0);
         
-        serialThreadObject->fullspeedOSC = XML.getValue("sabre:fullspeedOSC", 0);
-        OSCThreadObject->OSCInterval = XML.getValue("sabre:OSCinterval", 0);
+        serialThreadObject->fullspeedOSC = XML.getValue("sabre:OSCsender:fullspeed", 0);
+        OSCThreadObject->OSCInterval = XML.getValue("sabre:OSCsender:interval", 0);
 
 		for(i = 0; i < MAXNUM; i++) {
 			serialThreadObject->keys[i].threshDown = serialThreadObject->threshDown;
@@ -649,7 +677,7 @@ void sabreServer::dumpPrefs()
 	printf("accelResolution %d\n", serialThreadObject->accelResolution);
 	printf("accelOffset %ld\n", serialThreadObject->accelOffset);
 	printf("accelScale %2.12f\n", serialThreadObject->accelScale);
-	printf("fullspeedOSC %d\n", serialThreadObject->fullspeedOSC);
+	printf("OSCfullspeed %d\n", serialThreadObject->fullspeedOSC);
 	printf("OSCinterval %d\n", OSCThreadObject->OSCInterval);
     
 	for(i = 0; i < serialThreadObject->numKeyAddr; i++) {
@@ -782,6 +810,7 @@ void sabreServer::keyReleased(int key)
 	switch(key){
 		case 'f': // f-key: switch winow size
 			drawValues = !drawValues;
+            serialThreadObject->drawValues = drawValues;
 			windowChanged = 1;
 			redrawFlag = 1;
 //			if(!drawValues) {
@@ -811,6 +840,7 @@ void sabreServer::keyReleased(int key)
 			break;
 		case 'F':
 			drawValues = !drawValues;
+            serialThreadObject->drawValues = drawValues;
 			windowChanged = 1;
 			redrawFlag = 1;
 //			if(!drawValues) {
@@ -841,7 +871,7 @@ void sabreServer::mouseReleased()
 void sabreServer::mousePressed(int x, int y, int button)
 {
 	int i;
-	// printf("mousepressed at %d %d\n", x, y);
+	printf("mousepressed at %d %d\n", x, y);
 	ofRect(295, 36, 295+124, 36+20);
 	
 	// click in start/stope values
@@ -856,6 +886,7 @@ void sabreServer::mousePressed(int x, int y, int button)
             ofSleepMillis(5);
 			startSerial();
 			drawValues = 1;
+            serialThreadObject->drawValues = 1;
 //			serialThreadObject->status = true;
 		}
 		
@@ -863,12 +894,14 @@ void sabreServer::mousePressed(int x, int y, int button)
 		redrawFlag = 1;
 	}
 	// click in show/hide values
-	if(x > 295 && x < 419 && y > 26 && y < 48) {
+	if(x > 422 && x < 544 && y > 3 && y < 24) {
 		if(drawValues != 0) {
 			drawValues = 0;
-			serialThreadObject->calibrateAll = 0;			
+            serialThreadObject->drawValues = 0;
+			serialThreadObject->calibrateAll = 0;
 		} else {
 			drawValues = 1;
+            serialThreadObject->drawValues = 1;
 		}
 		windowChanged = 1;
 		redrawFlag = 1;
@@ -882,6 +915,7 @@ void sabreServer::mousePressed(int x, int y, int button)
 			getSerialDeviceList();
 			stopSerial();
 			drawValues = 1;
+            serialThreadObject->drawValues = 1;
 		}
 		windowChanged = 1;
 		redrawFlag = 1;
@@ -922,7 +956,7 @@ void sabreServer::mousePressed(int x, int y, int button)
 	}
 	// click in calibrate
 	// ofRect(295, 690, 124, 20);
-	if(x > 295 && x < 419 && y > 690 && y < 710) {
+	if(x > 440 && x < 520 && y > 480 && y < 500) {
 		if(serialThreadObject->calibrateAll != 0){
 			serialThreadObject->calibrateAll = 0;
 			for(i = 0; i < MAXNUM; i++) {
