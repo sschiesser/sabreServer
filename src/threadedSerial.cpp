@@ -787,11 +787,13 @@ void threadedSerial::draw()
 {
 	int i;
 	int anchorx = 12;
-	int anchory = 64;
-	int leftColumn = 156;
-	int midColumn = 220;
-	int rightColumn = 295;
-	int farRightColumn = 404;
+	int anchory = 66;
+	int leftColumn = 110;
+	int midColumn = 150;
+	int rightColumn = 220;
+	int farRightColumn = 330;
+    
+    int imuColumnLeft = 410;
 	
 	int stepsize = 18;
 	int columnwidth = 180;
@@ -803,15 +805,15 @@ void threadedSerial::draw()
 	{
 		if (status == 1 && drawValues)
 		{
-			ofFill();
-			ofSetColor(200, 200, 200, 255);
-			ofRect(leftColumn-1, 79, width-leftColumn-5, height-anchory-15);
+//			ofFill();
+//			ofSetColor(200, 200, 200, 255);
+//			ofRect(leftColumn-1, 79, width-leftColumn-5, height-anchory-15);
 			
 			for(i = 0; i < 25; i++) { // stripes
 				if((i % 2) == 0){
 					ofFill();
-					ofSetColor(216, 216, 216, 255);
-					ofRect(leftColumn-1, anchory+((i-1) * stepsize)+7, width-leftColumn-12, 16);
+					ofSetColor(255, 255, 255, 255);
+					ofRect(leftColumn-1, anchory+((i-1) * stepsize)+7, width-leftColumn-85, 16);
 					ofSetColor(0, 0, 0, 255);
 				}			
 			}
@@ -819,8 +821,8 @@ void threadedSerial::draw()
             for(i = 0; i < 12; i++) { // stripes
 				if((i % 3) == 0){
 					ofFill();
-					ofSetColor(216, 216, 216, 255);
-					ofRect(leftColumn-1+430, anchory+((i-1) * stepsize)+7, width-leftColumn-12, 16);
+					ofSetColor(255, 255, 255, 255);
+					ofRect(leftColumn-1 + imuColumnLeft, anchory+((i-1) * stepsize)+7, width-leftColumn-103, 16);
 					ofSetColor(0, 0, 0, 255);
 				}
 			}
@@ -864,74 +866,102 @@ void threadedSerial::draw()
 				ofSetColor(0, 0, 0, 255);
 //				yy = anchory+((i+25) * stepsize);
 				yy = anchory+((i) * stepsize);
-				TTF.drawString( ofToString(raw[i], 6) , leftColumn+430, yy );
-				TTF.drawString(ofToString(IMU[i], 6), midColumn+430, yy);
+				TTF.drawString( ofToString(raw[i], 6) , leftColumn + imuColumnLeft, yy );
+				TTF.drawString(ofToString(IMU[i], 6), midColumn  + 10 + imuColumnLeft, yy);
 				ofNoFill();
 				ofSetColor(91, 91,91, 255);
-				ofRect(rightColumn+430, yy-9, 104, 12);
+				ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
 				ofFill();
 				ofSetColor(0, 0, 0, 255);
-				ofRect( rightColumn+430 + (104 * IMU[i]), yy-9, 2, 12);
+				ofRect( rightColumn + imuColumnLeft + (104 * IMU[i]), yy-9, 2, 12);
 				ofNoFill();
 				ofSetColor(91, 91, 91, 255);
-				ofLine(rightColumn+52+430, yy-9, rightColumn+52+430, yy+4);
+				ofLine(rightColumn+52 + imuColumnLeft, yy-9, rightColumn+52 + imuColumnLeft, yy+4);
 			}	
 			// air 
 			ofSetColor(0, 0, 0, 255);
 //			yy = anchory+(34 * stepsize);
-			yy = anchory+(9 * stepsize);
-			TTF.drawString(ofToString(airLong[0], 1), leftColumn+430, yy );
-			TTF.drawString(ofToString(air[0], 2), midColumn+430, yy);
+			yy = anchory+(10 * stepsize);
+			TTF.drawString(ofToString(airLong[0], 1), leftColumn + imuColumnLeft, yy );
+			TTF.drawString(ofToString(air[0], 2), midColumn  + 10 + imuColumnLeft, yy);
 			
 			ofNoFill();
 			ofSetColor(91, 91, 91, 255);
-			ofRect(rightColumn+430, yy-9, 104, 12);
+			ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
 			ofFill();
 			ofSetColor(0, 0, 0, 127);
-			ofRect( rightColumn+430 + (104 * (CLAMP( ((air[0] - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
+			ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((air[0] - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
+            
+            if(airValue.calibratePressureRange) {
+                ofSetColor(255, 224, 0, 191);
+                ofRect( rightColumn + imuColumnLeft, yy-7, (103), 9);
+                // TODO figure scaling for the rangebars
+                ofSetColor(0, 0, 0, 255);
+                ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((air[0] - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
+            } else {
+                ofNoFill();
+                ofSetColor(91, 91, 91, 255);
+                ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
+                ofFill();
+                ofSetColor(0, 0, 0, 127);
+                ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((air[0] - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
+            }
+            
+            
+            
 			
 			// buttons
 			ofSetColor(0, 0, 0, 255);
 //			yy = anchory+((35) * stepsize);
-			yy = anchory+((10) * stepsize);
-			TTF.drawString( ofToString(button[2], 1), leftColumn+430, yy );
-			TTF.drawString( ofToString(button[1], 1), leftColumn+12+430, yy );
-			TTF.drawString( ofToString(button[0], 1), leftColumn+24+430, yy );
+			yy = anchory+((9) * stepsize);
+			TTF.drawString( ofToString(button[2], 1), leftColumn + imuColumnLeft, yy );
+			TTF.drawString( ofToString(button[1], 1), leftColumn+12 + imuColumnLeft, yy );
+			TTF.drawString( ofToString(button[0], 1), leftColumn+24 + imuColumnLeft, yy );
             
 			ofNoFill();
 			ofSetColor(91, 91, 91, 255);
-			ofRect(midColumn+430, yy-9, 12, 12);			
-			ofRect(midColumn+14+430, yy-9, 12, 12);
-			ofRect(midColumn+28+430, yy-9, 12, 12);
+			ofRect(midColumn + 10 + imuColumnLeft, yy-9, 12, 12);
+			ofRect(midColumn + 10 + 14 + imuColumnLeft, yy-9, 12, 12);
+			ofRect(midColumn + 10 + 28 + imuColumnLeft, yy-9, 12, 12);
 			
 			ofFill();
 			ofSetColor(0, 0, 0, 255);
 			if(button[2]) {
-				ofRect(midColumn+2+430, yy-6, 7, 7);
+				ofRect(midColumn+2 + imuColumnLeft, yy-6, 7, 7);
 			}				
 			if(button[1]) {
-				ofRect(midColumn+16+430, yy-6, 7, 7);
+				ofRect(midColumn+16 + imuColumnLeft, yy-6, 7, 7);
 			}
 			if(button[0]) {
-				ofRect(midColumn+30+430, yy-6, 7, 7);
+				ofRect(midColumn+30 + imuColumnLeft, yy-6, 7, 7);
 			}
             
 			// battery
 //            ofSetColor(0, 0, 0, 255);
 ////			yy = anchory+((36) * stepsize);
 //            yy = 40;
-//			TTF.drawString( "main: "+ofToString((int)(batteryLevelRight*12.5))+"%", anchorx+82+430, yy );
-//			TTF.drawString( "mouthpiece: "+ofToString((int)(batteryLevelAir*12.5))+"%", leftColumn+12+430, yy );
+//			TTF.drawString( "main: "+ofToString((int)(batteryLevelRight*12.5))+"%", anchorx+82 + 360, yy );
+//			TTF.drawString( "mouthpiece: "+ofToString((int)(batteryLevelAir*12.5))+"%", leftColumn+12 + 360, yy );
             
 			if(calibrateAll) {
 				ofFill();
 				ofSetColor(255, 127, 0);
-				ofRect(440, 480, 124, 20);
+				ofRect(375, 480, 124, 20);
 				ofNoFill();
 				ofSetColor(127, 127, 127);
-				ofRect(440, 480, 124, 20);
+				ofRect(375, 480, 124, 20);
 				ofSetColor(0, 0, 0);
-				TTF.drawString("Calibrating...", 440+28, 480+14);
+				TTF.drawString("Calibrating Keys...", 375+12, 480+14);
+			}
+            if(airValue.calibratePressureRange) {
+				ofFill();
+				ofSetColor(255, 224, 0);
+				ofRect(502, 480, 124, 20);
+				ofNoFill();
+				ofSetColor(127, 127, 127);
+				ofRect(502, 480, 124, 20);
+				ofSetColor(0, 0, 0);
+				TTF.drawString("Calibrating Air...", 502+12, 480+14);
 			}
 		}
 		unlock();
