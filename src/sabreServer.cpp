@@ -282,7 +282,7 @@ void sabreServer::draw()
 		}
 		
 	}
-    TTFsmall.drawString( "battery level: main: "+ofToString((int)(serialThreadObject->batteryLevelRight*12.5), 2, 2, 0)+"%" +" mouthpiece: "+ofToString((int)(serialThreadObject->batteryLevelAir*12.5), 2, 2, 0)+"%", 270, 34 );
+    TTFsmall.drawString( "battery level: main: "+ofToString((int)(serialThreadObject->batteryLevelRight*6.667), 2, 2, 0)+"%" +" mouthpiece: "+ofToString((int)(serialThreadObject->batteryLevelAir*6.667), 2, 2, 0)+"%", 270, 34 );
     TTFsmall.drawString( "wireless: left "+ofToString((int)(serialThreadObject->linkQualityLeft*0.390625), 2, 0, 0)+"%" +" right: "+ofToString((int)(serialThreadObject->linkQualityRight*0.390625), 2, 0, 0)+"% "+" mouthpiece: "+ofToString((int)(serialThreadObject->linkQualityAir*0.390625), 2, 0, 0)+"%", 270, 48 );
 
 
