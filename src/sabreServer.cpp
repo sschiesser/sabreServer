@@ -282,36 +282,80 @@ void sabreServer::draw()
 			drawTex = 0;
 		}
 	}
+//    TTFsmall.drawString( "battery level: main: "+ofToString((int)(serialThreadObject->batteryLevelRight*6.667), 2, 2, 0)+"%" +" mouthpiece: "+ofToString((int)(serialThreadObject->batteryLevelAir*6.667), 2, 2, 0)+"%", 270, 34 );
+//    TTFsmall.drawString( "wireless: left "+ofToString((int)(serialThreadObject->linkQualityLeft*0.390625), 2, 0, 0)+"%" +" right: "+ofToString((int)(serialThreadObject->linkQualityRight*0.390625), 2, 0, 0)+"% "+" mouthpiece: "+ofToString((int)(serialThreadObject->linkQualityAir*0.390625), 2, 0, 0)+"%", 270, 48 );
     
 #pragma mark draw levels
     
     TTFsmall.drawString( "battery: main       air", 280, 34 );
-
+    
     // battery display
-    for(i = 0; i < 16; i++){
+    for(i = 0; i < 15; i++){
         pos_x = 360;
-        if(serialThreadObject->batteryLevelRight*12.5 >= (i * 6.25) ) {
+        if(serialThreadObject->batteryLevelRight*12.5 >= (i * 6.667) ) {
             ofSetColor(127, 127, 127, 255);
             ofRect(pos_x+i*2, 25, 2, 10);
         }
     }
-//    ofRect
-    for(i = 0; i < 16; i++){
+    //    ofRect
+    for(i = 0; i < 15; i++){
         pos_x = 425;
-        if(serialThreadObject->batteryLevelAir*12.5 >= (i * 6.25) ) {
+        if(serialThreadObject->batteryLevelAir*12.5 >= (i * 6.667) ) {
             ofSetColor(127, 127, 127, 255);
             ofRect(pos_x+i*2, 25, 2, 10);
         }
     }
     ofSetColor(191, 191, 191, 255);
     ofNoFill();
-    ofRect(360, 25, 33, 10);
-    ofRect(425, 25, 33, 10);
-    ofRect(393, 27, 2, 6);
-    ofRect(458, 27, 2, 6);
-
+    ofRect(360, 25, 31, 10);
+    ofRect(425, 25, 31, 10);
+    ofRect(391, 27, 2, 6);
+    ofRect(456, 27, 2, 6);
+    
     ofFill();
-
+    
+    
+    ofSetColor(0, 0, 0, 191);
+    TTFsmall.drawString( "wireless: left       right      air", 280, 48 );
+    
+    for(i = 0; i < 8; i++){
+        pos_x = 360;
+        if( (CLAMP(serialThreadObject->linkQualityLeft, 50, 200) - 50 ) >= (i * 18) ) {
+            ofSetColor(127, 127, 127, 255);
+        }else{
+            ofSetColor(212, 212, 212, 255);
+            
+        }
+        ofRect(pos_x+i*4, 36+(10-i), 2, 2+i);
+    }
+    for(i = 0; i < 8; i++){
+        pos_x = 430;
+        if( (CLAMP(serialThreadObject->linkQualityRight, 50, 200) - 50 ) >= (i * 18) ) {
+            ofSetColor(127, 127, 127, 255);
+        }else{
+            ofSetColor(212, 212, 212, 255);
+            
+        }
+        ofRect(pos_x+i*4, 36+(10-i), 2, 2+i);
+    }
+    for(i = 0; i < 8; i++){
+        pos_x = 485;
+        if( (CLAMP(serialThreadObject->linkQualityAir, 50, 200) - 50 ) >= (i * 18) ) {
+            ofSetColor(127, 127, 127, 255);
+        }else{
+            ofSetColor(212, 212, 212, 255);
+            
+        }
+        ofRect(pos_x+i*4, 36+(10-i), 2, 2+i);
+    }
+    
+    //    serialThreadObject->batteryLevelAir*6.25
+    //    serialThreadObject->batteryLevelRight*6.25
+    //
+    //    serialThreadObject->linkQualityLeft*0.390625
+    //    serialThreadObject->linkQualityRight*0.390625
+    //    serialThreadObject->linkQualityAir*0.390625
+    
     
     ofSetColor(0, 0, 0, 191); 
     TTFsmall.drawString( "wireless: left       right      air", 280, 48 );
