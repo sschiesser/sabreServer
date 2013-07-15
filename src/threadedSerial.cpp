@@ -64,6 +64,47 @@ threadedSerial::threadedSerial()
     airValue.calibrationFlag = 0;
     airValue.calibrationCounter = 0;
     airValue.calibrationValue = 0.0;
+    
+    raw[0] = 0;
+    IMU[0] = 0.0f;
+    raw[1] = 0;
+    IMU[1] = 0.0f;
+    raw[2] = 0;
+    IMU[2] = 0.0f;
+    
+    raw[3] = 0;
+    IMU[3] = 0.0f;
+    raw[4] = 0;
+    IMU[4] = 0.0f;
+    raw[5] = 0;
+    IMU[5] = 0.0f;
+    
+    raw[6] = 1;
+    IMU[6] = 1.0f;
+    raw[7] = 1;
+    IMU[7] = 1.0f;
+    raw[8] = 1;
+    IMU[8] = 1.0f;
+    
+    raw[9] = 0;
+    IMU[9] = 0.0f;
+    
+    
+    airLong[0] = 0;
+    air[0] = 1000.0;
+    airValue.continuous = 0.0f;
+    
+    button[0] = 0;
+    button[1] = 0;
+    button[2] = 0;
+    
+    batteryLevelRight = 0;
+    batteryLevelAir = 0;
+    
+    linkQualityLeft = 0;
+    linkQualityRight = 0;
+    linkQualityAir = 0;
+    
 }
 
 threadedSerial::~threadedSerial()
@@ -882,29 +923,29 @@ void threadedSerial::draw()
 			ofSetColor(0, 0, 0, 255);
 //			yy = anchory+(34 * stepsize);
 			yy = anchory+(10 * stepsize);
-			TTF.drawString(ofToString(airLong[0], 1), leftColumn + imuColumnLeft, yy );
-			TTF.drawString(ofToString(air[0], 2), midColumn  + 10 + imuColumnLeft, yy);
+			TTF.drawString(ofToString(air[0], 2), leftColumn + imuColumnLeft, yy );
+			TTF.drawString(ofToString(airValue.continuous, 2), midColumn  + 10 + imuColumnLeft, yy);
 			
 			ofNoFill();
 			ofSetColor(91, 91, 91, 255);
 			ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
 			ofFill();
 			ofSetColor(0, 0, 0, 127);
-			ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((air[0] - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
+			ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((airLong[0] - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
             
             if(airValue.calibratePressureRange) {
                 ofSetColor(255, 224, 0, 191);
                 ofRect( rightColumn + imuColumnLeft, yy-7, (103), 9);
                 // TODO figure scaling for the rangebars
                 ofSetColor(0, 0, 0, 255);
-                ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((air[0] - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
+                ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((airValue.continuous - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
             } else {
                 ofNoFill();
                 ofSetColor(91, 91, 91, 255);
                 ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
                 ofFill();
                 ofSetColor(0, 0, 0, 127);
-                ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((air[0] - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
+                ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((airValue.continuous - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
             }
             
             
@@ -927,13 +968,13 @@ void threadedSerial::draw()
 			ofFill();
 			ofSetColor(0, 0, 0, 255);
 			if(button[2]) {
-				ofRect(midColumn+2 + imuColumnLeft, yy-6, 7, 7);
+				ofRect(midColumn + 12 + imuColumnLeft, yy-6, 7, 7);
 			}				
 			if(button[1]) {
-				ofRect(midColumn+16 + imuColumnLeft, yy-6, 7, 7);
+				ofRect(midColumn + 12 + 14 + imuColumnLeft, yy-6, 7, 7);
 			}
 			if(button[0]) {
-				ofRect(midColumn+30 + imuColumnLeft, yy-6, 7, 7);
+				ofRect(midColumn + 12 + 28 + imuColumnLeft, yy-6, 7, 7);
 			}
             
 			// battery

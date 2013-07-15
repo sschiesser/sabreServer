@@ -102,11 +102,12 @@ void sabreServer::draw()
 	int anchory = 66;
 	int stepsize = 18;
 	int columnwidth = 200;
-	int rightColumn = 210;
+	int rightColumn = 270;
 	int leftColumn = 10;
 	int width;
 	int height;
 	double yy;
+    int pos_x;
 	
 	if(windowChanged == 1) {
 		if(drawValues == 0) {
@@ -126,9 +127,9 @@ void sabreServer::draw()
 	if(redrawFlag == 1) // drawn once after first update
 	{
 		// header frame background
-		ofFill();        
-		ofSetColor(191, 191, 191, 255);
-        ofRect(0, 0, width, 49);
+//		ofFill();        
+//		ofSetColor(191, 191, 191, 255);
+//        ofRect(0, 0, width, 49);
 
 		
 //		ofSetColor(255, 191, 191, 127);
@@ -280,11 +281,80 @@ void sabreServer::draw()
 			texScreen.draw(0, 0, 440, 266);
 			drawTex = 0;
 		}
-		
 	}
-    TTFsmall.drawString( "battery level: main: "+ofToString((int)(serialThreadObject->batteryLevelRight*12.5), 2, 2, 0)+"%" +" mouthpiece: "+ofToString((int)(serialThreadObject->batteryLevelAir*12.5), 2, 2, 0)+"%", 270, 34 );
-    TTFsmall.drawString( "wireless: left "+ofToString((int)(serialThreadObject->linkQualityLeft*0.390625), 2, 0, 0)+"%" +" right: "+ofToString((int)(serialThreadObject->linkQualityRight*0.390625), 2, 0, 0)+"% "+" mouthpiece: "+ofToString((int)(serialThreadObject->linkQualityAir*0.390625), 2, 0, 0)+"%", 270, 48 );
+    
+#pragma mark draw levels
+    
+    TTFsmall.drawString( "battery: main       air", 280, 34 );
 
+    // battery display
+    for(i = 0; i < 16; i++){
+        pos_x = 360;
+        if(serialThreadObject->batteryLevelRight*12.5 >= (i * 6.25) ) {
+            ofSetColor(127, 127, 127, 255);
+            ofRect(pos_x+i*2, 25, 2, 10);
+        }
+    }
+//    ofRect
+    for(i = 0; i < 16; i++){
+        pos_x = 425;
+        if(serialThreadObject->batteryLevelAir*12.5 >= (i * 6.25) ) {
+            ofSetColor(127, 127, 127, 255);
+            ofRect(pos_x+i*2, 25, 2, 10);
+        }
+    }
+    ofSetColor(191, 191, 191, 255);
+    ofNoFill();
+    ofRect(360, 25, 33, 10);
+    ofRect(425, 25, 33, 10);
+    ofRect(393, 27, 2, 6);
+    ofRect(458, 27, 2, 6);
+
+    ofFill();
+
+    
+    ofSetColor(0, 0, 0, 191); 
+    TTFsmall.drawString( "wireless: left       right      air", 280, 48 );
+
+    for(i = 0; i < 8; i++){
+        pos_x = 360;
+        if( (CLAMP(serialThreadObject->linkQualityLeft, 50, 200) - 50 ) >= (i * 18) ) {
+            ofSetColor(127, 127, 127, 255);
+        }else{
+            ofSetColor(212, 212, 212, 255);
+            
+        }
+        ofRect(pos_x+i*4, 36+(10-i), 2, 2+i);
+    }
+    for(i = 0; i < 8; i++){
+        pos_x = 430;
+        if( (CLAMP(serialThreadObject->linkQualityRight, 50, 200) - 50 ) >= (i * 18) ) {
+            ofSetColor(127, 127, 127, 255);
+        }else{
+            ofSetColor(212, 212, 212, 255);
+            
+        }
+        ofRect(pos_x+i*4, 36+(10-i), 2, 2+i);
+    }
+    for(i = 0; i < 8; i++){
+        pos_x = 485;
+        if( (CLAMP(serialThreadObject->linkQualityAir, 50, 200) - 50 ) >= (i * 18) ) {
+            ofSetColor(127, 127, 127, 255);
+        }else{
+            ofSetColor(212, 212, 212, 255);
+            
+        }
+        ofRect(pos_x+i*4, 36+(10-i), 2, 2+i);
+    }
+
+//    serialThreadObject->batteryLevelAir*6.25
+//    serialThreadObject->batteryLevelRight*6.25
+//     
+//    serialThreadObject->linkQualityLeft*0.390625
+//    serialThreadObject->linkQualityRight*0.390625
+//    serialThreadObject->linkQualityAir*0.390625
+
+    
 
     
 	if(drawValues) {
@@ -890,7 +960,7 @@ void sabreServer::mousePressed(int x, int y, int button)
 	ofRect(295, 36, 295+124, 36+20);
 	
 	// click in start/stope values
-	if(x > 210 && x < 334 && y > 4 && y < 25) {
+	if(x > 270 && x < 394 && y > 4 && y < 25) {
 		// printf("start/stop clicked with status %d\n", serialThreadObject->status);
 		if(serialThreadObject->status) {
 			stopSerial();
@@ -909,7 +979,7 @@ void sabreServer::mousePressed(int x, int y, int button)
 		redrawFlag = 1;
 	}
 	// click in show/hide values
-	if(x > 337 && x < 460 && y > 3 && y < 24) {
+	if(x > 397 && x < 520 && y > 3 && y < 24) {
 		if(drawValues != 0) {
 			drawValues = 0;
             serialThreadObject->drawValues = 0;
