@@ -610,7 +610,7 @@ bool sabreServer::readPrefs()
 		serialThreadObject->debounceTimeOut = XML.getValue("sabre:debounce-timeout", 0);
         
         serialThreadObject->fullspeedOSC = XML.getValue("sabre:OSCsender:fullspeed", 0);
-        OSCThreadObject->OSCInterval = XML.getValue("sabre:OSCsender:interval", 0);
+        OSCThreadObject->OSCInterval = XML.getValue("sabre:OSCsender:interval", 10);
 
 		for(i = 0; i < MAXNUM; i++) {
 			serialThreadObject->keys[i].threshDown = serialThreadObject->threshDown;

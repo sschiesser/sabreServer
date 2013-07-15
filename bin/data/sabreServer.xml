@@ -7,10 +7,10 @@
     <!-- <serialport>/dev/tty.usbserial-A600dJ1Z</serialport> -->
     <baudrate>230400</baudrate>
     <framerate>20</framerate>
-	<OSCsender>
-		<fullspeed>0</fullspeed>
-	    <interval>10</interval>
-	</OSCsender>
+    <OSCsender>
+        <fullspeed>0</fullspeed>
+        <interval>10</interval>
+    </OSCsender>
     <network>
         <sender>
             <IP>localhost</IP>
@@ -242,5 +242,5 @@
         <oscaddress>/sabre/note</oscaddress>
     </midinote>
     <serialport>/dev/tty.Bluetooth-PDA-Sync</serialport>
-    <display>1</display>
+    <display>0</display>
 </sabre>
