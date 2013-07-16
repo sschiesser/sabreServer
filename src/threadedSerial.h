@@ -154,7 +154,9 @@ public:
 	long		tempOffset;
 	double		tempScale;
 	
-	bool		calibrateAll;
+    
+	bool		calibrateSwitch;
+    bool        calibrateSingle;
 	bool		calibrate[MAXNUM];
 	double		lowThresh;
 	double		highThresh;

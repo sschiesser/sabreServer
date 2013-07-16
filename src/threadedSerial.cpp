@@ -45,7 +45,7 @@ threadedSerial::threadedSerial()
 	headingOld_x = headingOld_y = 0.0;
 	
 	TTF.loadFont("lucidagrande.ttf", 8, 1, 1, 0);
-	calibrateAll = 0;
+	calibrateSwitch = 0;
 	for(i = 0; i < MAXNUM; i++) {
 		calibrate[i] = 0;
 	}
@@ -79,12 +79,12 @@ threadedSerial::threadedSerial()
     raw[5] = 0;
     IMU[5] = 0.0f;
     
-    raw[6] = 1;
-    IMU[6] = 1.0f;
-    raw[7] = 1;
-    IMU[7] = 1.0f;
-    raw[8] = 1;
-    IMU[8] = 1.0f;
+    raw[6] = 0;
+    IMU[6] = 2,147,483,648.0f;
+    raw[7] = 0;
+    IMU[7] = 2,147,483,648.0f;
+    raw[8] = 0;
+    IMU[8] = 2,147,483,648.0f;
     
     raw[9] = 0;
     IMU[9] = 0.0f;
@@ -902,7 +902,25 @@ void threadedSerial::draw()
 					ofSetColor(0, 0, 0, 255);
 					ofRect(farRightColumn+2, yy-6, 7, 7);
 				}
+                // individual toggles
+                if(calibrateSwitch) {
+                    if(calibrateSingle) {
+                        
+                        if(calibrate[i]){
+                            ofFill();
+                            ofSetColor(255,127,0, 191);
+                            ofRect(rightColumn +126, yy-9, 16, 12);
+                        }
+                        ofNoFill();
+                        ofSetColor(0,0,0);
+                        ofRect(rightColumn +126, yy-9, 16, 12);
+                        TTF.drawString("c", rightColumn+130, yy+1);
+                    }
+                }
 			}
+            
+            
+            
 			for(i = 0; i < 9; i++) { // imu
 				ofSetColor(0, 0, 0, 255);
 //				yy = anchory+((i+25) * stepsize);
@@ -984,7 +1002,7 @@ void threadedSerial::draw()
 //			TTF.drawString( "main: "+ofToString((int)(batteryLevelRight*12.5))+"%", anchorx+82 + 360, yy );
 //			TTF.drawString( "mouthpiece: "+ofToString((int)(batteryLevelAir*12.5))+"%", leftColumn+12 + 360, yy );
             
-			if(calibrateAll) {
+			if(calibrateSwitch) {
 				ofFill();
 				ofSetColor(255, 127, 0);
 				ofRect(375, 480, 124, 20);
@@ -992,8 +1010,32 @@ void threadedSerial::draw()
 				ofSetColor(127, 127, 127);
 				ofRect(375, 480, 124, 20);
 				ofSetColor(0, 0, 0);
-				TTF.drawString("Calibrating Keys...", 375+12, 480+14);
+				TTF.drawString("Calibrating Keys", 375+12, 480+14);
+
+                if(calibrateSingle == 0) {
+                    ofFill();
+                    ofSetColor(255, 127, 0);
+                    ofRect(375, 458, 124, 20);
+                    ofNoFill();
+                    ofSetColor(127, 127, 127);
+                    ofRect(375, 458, 124, 20);
+                    ofSetColor(0, 0, 0);
+                    TTF.drawString("Calibrate All...", 375+24, 458+14);
+                }else{
+                    ofNoFill();
+                    ofSetColor(127, 127, 127);
+                    ofRect(375, 458, 124, 20);
+                    ofSetColor(0, 0, 0);
+                    TTF.drawString("Calibrate All Keys", 375+10, 458+14);
+                }
+
+				ofNoFill();
+				ofSetColor(127, 127, 127);
+				ofRect(375, 436, 124, 20);
+				ofSetColor(0, 0, 0);
+				TTF.drawString("Reset Key Calibr.", 375+12, 436+14);
 			}
+            
             if(airValue.calibratePressureRange) {
 				ofFill();
 				ofSetColor(255, 224, 0);
@@ -1002,7 +1044,7 @@ void threadedSerial::draw()
 				ofSetColor(127, 127, 127);
 				ofRect(502, 480, 124, 20);
 				ofSetColor(0, 0, 0);
-				TTF.drawString("Calibrating Air...", 502+12, 480+14);
+				TTF.drawString("Calibrating Air", 502+12, 480+14);
 			}
 		}
 		unlock();

@@ -15,7 +15,7 @@ void sabreServer::setup()
 {
 	ofSetEscapeQuitsApp(false);
 	ofEnableAlphaBlending();
-	titleString = "sabreServer version 0.9a1";
+	titleString = "sabreServer version 0.9";
 	
 	serialThreadObject = new(threadedSerial);
 	OSCThreadObject = new(threadedOSC);
@@ -75,7 +75,7 @@ void sabreServer::setup()
 	}
 	ofSetWindowPosition(0,44);
 
-    dumpPrefs();
+//    dumpPrefs();
 }
 
 
@@ -136,7 +136,7 @@ void sabreServer::draw()
 //		ofRect(0, 0, width, height);
 		
 		if(serialThreadObject->status) {
-			ofSetColor(63, 63, 63, 191);
+			ofSetColor(63, 63, 63, 255);
 		} else {
 			ofSetColor(127, 127, 127, 255);
 		}
@@ -287,13 +287,13 @@ void sabreServer::draw()
     
 #pragma mark draw levels
     
-    ofSetColor(63, 63, 63, 191);
+    ofSetColor(63, 63, 63, 255);
     TTFsmall.drawString( "battery: main       air", 280, 34 );
     
     // battery display
     for(i = 0; i < 15; i++){
         pos_x = 360;
-        if(serialThreadObject->batteryLevelRight*12.5 >= (i * 6.667) ) {
+        if(serialThreadObject->batteryLevelRight*6.667 >= (i * 6.667) ) {
             ofSetColor(127, 127, 127);
             ofRect(pos_x+i*2, 25, 2, 10);
         }
@@ -301,12 +301,12 @@ void sabreServer::draw()
     //    ofRect
     for(i = 0; i < 15; i++){
         pos_x = 425;
-        if(serialThreadObject->batteryLevelAir*12.5 >= (i * 6.667) ) {
+        if(serialThreadObject->batteryLevelAir*6.667 >= (i * 6.667) ) {
             ofSetColor(127, 127, 127);
             ofRect(pos_x+i*2, 25, 2, 10);
         }
     }
-    ofSetColor(63, 63, 63, 191);
+    ofSetColor(63, 63, 63, 255);
     ofNoFill();
     ofRect(360, 25, 31, 10);
     ofRect(425, 25, 31, 10);
@@ -316,12 +316,12 @@ void sabreServer::draw()
     ofFill();
     
     
-    ofSetColor(63, 63, 63, 191);
+    ofSetColor(63, 63, 63, 255);
     TTFsmall.drawString( "wireless: left       right      air", 280, 48 );
     
     for(i = 0; i < 8; i++){
         pos_x = 360;
-        if( (CLAMP(serialThreadObject->linkQualityLeft, 50, 200) - 50 ) >= (i * 18) ) {
+        if( (CLAMP(serialThreadObject->linkQualityLeft, 0, 205) - 0 ) >= (i * 18) ) {
             ofSetColor(127, 127, 127, 255);
         }else{
             ofSetColor(212, 212, 212, 255);
@@ -331,7 +331,7 @@ void sabreServer::draw()
     }
     for(i = 0; i < 8; i++){
         pos_x = 430;
-        if( (CLAMP(serialThreadObject->linkQualityRight, 50, 200) - 50 ) >= (i * 18) ) {
+        if( (CLAMP(serialThreadObject->linkQualityRight, 0, 205) - 0 ) >= (i * 18) ) {
             ofSetColor(127, 127, 127, 255);
         }else{
             ofSetColor(212, 212, 212, 255);
@@ -341,7 +341,7 @@ void sabreServer::draw()
     }
     for(i = 0; i < 8; i++){
         pos_x = 485;
-        if( (CLAMP(serialThreadObject->linkQualityAir, 50, 200) - 50 ) >= (i * 18) ) {
+        if( (CLAMP(serialThreadObject->linkQualityAir, 0, 205) - 0 ) >= (i * 18) ) {
             ofSetColor(127, 127, 127, 255);
         }else{
             ofSetColor(212, 212, 212, 255);
@@ -541,18 +541,21 @@ void sabreServer::receiveOSC()
 //			status2 = "sending OSC to "+serialThreadObject->sendIP+" on port "+ofToString(serialThreadObject->sendport);
 		}else if ( strcmp( temp.c_str(), "/sabre/exit" ) == 0 ) {
 			sabreServer().exit();
-		}else if ( strcmp( temp.c_str(), "/sabre/calibrateAll" ) == 0 ) {
-			if(serialThreadObject->calibrateAll == 1) { // before we swith it off
+		}else if ( strcmp( temp.c_str(), "/sabre/calibrateSwitch" ) == 0 ) {
+			if(serialThreadObject->calibrateSwitch == 1) { // before we switch it off
+                
 				for(i = 0; i < MAXNUM; i++) {
 					serialThreadObject->calibrate[i] = 0;
 				}
 				writeScaling(); // we write the values into the prefs
+                
 			}
-			serialThreadObject->calibrateAll = !serialThreadObject->calibrateAll;
+			serialThreadObject->calibrateSwitch = !serialThreadObject->calibrateSwitch;
 			for(i = 0; i < MAXNUM; i++) {
 				serialThreadObject->calibrate[i] = !serialThreadObject->calibrate[i];
 			}
-			printf("calibrate is %d\n", serialThreadObject->calibrateAll);
+			printf("calibrate is %d\n", serialThreadObject->calibrateSwitch);
+            
 		}else if ( strcmp( temp.c_str(), "/sabre/calibrate" ) == 0 ) {
 			int which = m.getArgAsInt32( 0 );
 			serialThreadObject->calibrate[which] = m.getArgAsInt32( 1 );
@@ -884,10 +887,20 @@ void sabreServer::resetCalibrate()
 	{
 		serialThreadObject->keys[i].minimum = 1023;
 		serialThreadObject->keys[i].maximum = 0;
-        
-        serialThreadObject->airValue.minimum = 32768;
-        serialThreadObject->airValue.maximum = -32768;
 	}
+}
+
+void sabreServer::resetAirCalibrate()
+{
+    serialThreadObject->airValue.minimum = 32768;
+    serialThreadObject->airValue.maximum = -32768;
+}
+
+void sabreServer::resetSingleCalibrate(int i)
+{
+    serialThreadObject->keys[i].minimum = 1023;
+    serialThreadObject->keys[i].maximum = 0;
+
 }
 
 void sabreServer::keyReleased(int key)
@@ -983,7 +996,7 @@ void sabreServer::mousePressed(int x, int y, int button)
 		if(drawValues != 0) {
 			drawValues = 0;
             serialThreadObject->drawValues = 0;
-			serialThreadObject->calibrateAll = 0;
+			serialThreadObject->calibrateSwitch = 0;
 		} else {
 			drawValues = 1;
             serialThreadObject->drawValues = 1;
@@ -1040,25 +1053,73 @@ void sabreServer::mousePressed(int x, int y, int button)
 			redrawFlag = 1;
 		}
 	}
-	// click in calibrate keys
+	// click in main calibrate button
 	// ofRect(295, 690, 124, 20);
 	if(x > 375 && x < 500 && y > 480 && y < 500) {
-		if(serialThreadObject->calibrateAll != 0){
-			serialThreadObject->calibrateAll = 0;
-			for(i = 0; i < MAXNUM; i++) {
+		if(serialThreadObject->calibrateSwitch != 0) { // switch off
+			serialThreadObject->calibrateSwitch = 0;
+            serialThreadObject->calibrateSingle = 0;
+            for(i = 0; i < MAXNUM; i++) {
 				serialThreadObject->calibrate[i] = 0;
-
 			}
 			writeScaling();
-		} else {
-			serialThreadObject->calibrateAll = 1;
-			for(i = 0; i < MAXNUM; i++) {
-				serialThreadObject->calibrate[i] = 1;
-			}
-			resetCalibrate();
+		
+        } else { //switch on
+			serialThreadObject->calibrateSwitch = 1;
+            serialThreadObject->calibrateSingle = 1;
+//            for(i = 0; i < MAXNUM; i++) {
+//				serialThreadObject->calibrate[i] = 1;
+//			}
+//            
+//			resetCalibrate();
 		}
-//		printf("serialThreadObject->calibrateAll is %d\n", serialThreadObject->calibrate);
+//		printf("serialThreadObject->calibrateSwitch is %d\n", serialThreadObject->calibrate);
 	}
+    if(serialThreadObject->calibrateSwitch) {
+        // click in calibrateAll == calibrateSingle flag :: conditional on main calibrate button
+        if(x > 375 && x < 500 && y > 458 && y < 478) {
+            if(serialThreadObject->calibrateSingle != 0){ // switch off
+                serialThreadObject->calibrateSingle = 0;
+                // reset all to zero
+                for(i = 0; i < MAXNUM; i++) {
+                    serialThreadObject->calibrate[i] = 1;
+                }
+                resetCalibrate();
+            } else { // switch on
+                serialThreadObject->calibrateSingle = 1;
+                for(i = 0; i < MAXNUM; i++) {
+                    serialThreadObject->calibrate[i] = 0;
+                }
+                writeScaling();
+
+            }
+            printf("serialThreadObject->calibrateSingle is %d\n", serialThreadObject->calibrateSingle);
+        }
+        
+        if(x > 346 && x < 362){
+            int yy = y - 57;
+            i = yy / 18;
+            printf("clicked inside calibrate toggle Nr. %d at pos %d %d\n",i, x, y);
+            if(serialThreadObject->calibrate[i] == 0){
+                serialThreadObject->calibrate[i] = 1;
+                resetSingleCalibrate(i);
+            }else{
+                serialThreadObject->calibrate[i] = 0;
+                writeScaling();
+            }
+        }
+
+        if(x > 375 && x < 500 && y > 436 && y < 456) {
+            printf("clicked in reset Calibration");
+            for(int i = 0; i < serialThreadObject->numKeyAddr; i++)
+            {
+                serialThreadObject->keys[i].minimum = 0;
+                serialThreadObject->keys[i].maximum = 1023;
+            }
+        }
+        
+    }
+    
     // click in calibrate air
     if(x > 502 && x < 627 && y > 480 && y < 500) {
 		if(serialThreadObject->airValue.calibratePressureRange != 0){
@@ -1066,9 +1127,8 @@ void sabreServer::mousePressed(int x, int y, int button)
             writeScaling();
         } else {
             serialThreadObject->airValue.calibratePressureRange = 1;
-            resetCalibrate();
+            resetAirCalibrate();
         }
-    //		printf("serialThreadObject->calibrateAll is %d\n", serialThreadObject->calibrate);
-        }
+    }
 }
 

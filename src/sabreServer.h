@@ -46,6 +46,8 @@ public:
 	void readMidicodes();
 
 	void resetCalibrate();
+	void resetSingleCalibrate(int i);
+    void resetAirCalibrate();
 
 	void writeScaling();
 
