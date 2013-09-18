@@ -29,157 +29,157 @@
     <!-- 2g/4g/8g/16g 10/11/12/13bit resolution -->
     <key id="1">
         <oscaddress>/sabre/key/1</oscaddress>
-        <invert>0</invert>
+        <invert>1</invert>
         <threshold>
             <up>0.85</up>
             <down>0.15</down>
         </threshold>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>179</minimum>
+        <maximum>977</maximum>
     </key>
     <key id="2">
         <oscaddress>/sabre/key/2</oscaddress>
-        <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <invert>1</invert>
+        <minimum>368</minimum>
+        <maximum>979</maximum>
     </key>
     <key id="3">
         <oscaddress>/sabre/key/3</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>71</minimum>
+        <maximum>768</maximum>
     </key>
     <key id="4">
         <oscaddress>/sabre/key/4</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>23</minimum>
+        <maximum>897</maximum>
     </key>
     <key id="5">
         <oscaddress>/sabre/key/5</oscaddress>
-        <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <invert>1</invert>
+        <minimum>79</minimum>
+        <maximum>981</maximum>
     </key>
     <key id="6">
         <oscaddress>/sabre/key/6</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>38</minimum>
+        <maximum>768</maximum>
     </key>
     <key id="7">
         <oscaddress>/sabre/key/7</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
+        <minimum>41</minimum>
         <maximum>1023</maximum>
     </key>
     <key id="8">
         <oscaddress>/sabre/key/8</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
+        <minimum>48</minimum>
         <maximum>1023</maximum>
     </key>
     <key id="9">
         <oscaddress>/sabre/key/9</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>38</minimum>
+        <maximum>776</maximum>
     </key>
     <key id="10">
         <oscaddress>/sabre/key/10</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>278</minimum>
+        <maximum>783</maximum>
     </key>
     <key id="11">
         <oscaddress>/sabre/key/11</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>48</minimum>
+        <maximum>768</maximum>
     </key>
     <key id="12">
         <oscaddress>/sabre/key/12</oscaddress>
-        <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <invert>1</invert>
+        <minimum>159</minimum>
+        <maximum>979</maximum>
     </key>
     <key id="13">
         <oscaddress>/sabre/key/13</oscaddress>
-        <invert>0</invert>
+        <invert>1</invert>
         <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <maximum>992</maximum>
     </key>
     <key id="14">
         <oscaddress>/sabre/key/14</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>94</minimum>
+        <maximum>393</maximum>
     </key>
     <key id="15">
         <oscaddress>/sabre/key/15</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>15</minimum>
+        <maximum>307</maximum>
     </key>
     <key id="16">
         <oscaddress>/sabre/key/16</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>11</minimum>
+        <maximum>393</maximum>
     </key>
     <key id="17">
         <oscaddress>/sabre/key/17</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>142</minimum>
+        <maximum>352</maximum>
     </key>
     <key id="18">
         <oscaddress>/sabre/key/18</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>204</minimum>
+        <maximum>718</maximum>
     </key>
     <key id="19">
         <oscaddress>/sabre/key/19</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>12</minimum>
+        <maximum>483</maximum>
     </key>
     <key id="20">
         <oscaddress>/sabre/key/20</oscaddress>
-        <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <invert>1</invert>
+        <minimum>828</minimum>
+        <maximum>1011</maximum>
     </key>
     <key id="21">
         <oscaddress>/sabre/key/21</oscaddress>
-        <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <invert>1</invert>
+        <minimum>707</minimum>
+        <maximum>1009</maximum>
     </key>
     <key id="22">
         <oscaddress>/sabre/key/22</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>12</minimum>
+        <maximum>312</maximum>
     </key>
     <key id="23">
         <oscaddress>/sabre/key/23</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>12</minimum>
+        <maximum>323</maximum>
     </key>
     <key id="24">
         <oscaddress>/sabre/key/24</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>12</minimum>
+        <maximum>384</maximum>
     </key>
     <key id="25">
         <oscaddress>/sabre/key/25</oscaddress>
         <invert>0</invert>
-        <minimum>0</minimum>
-        <maximum>1023</maximum>
+        <minimum>14</minimum>
+        <maximum>384</maximum>
     </key>
     <imu id="0">
         <oscaddress>/sabre/motion/accelero/scaled</oscaddress>
@@ -243,6 +243,6 @@
     <midinote>
         <oscaddress>/sabre/note</oscaddress>
     </midinote>
+    <serialport>/dev/tty.usbmodem411</serialport>
     <display>1</display>
-    <serialport>/dev/tty.usbmodem1411</serialport>
 </sabre>

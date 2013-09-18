@@ -22,7 +22,7 @@
 
 #define MAXNUM 64 // maximum number messages to allocate
 #define PATTERNLENGTH_1 23 // maximumnumber of bytes in a left hand message
-#define PATTERNLENGTH_2 39 // maximumnumber of bytes in a right hand message
+#define PATTERNLENGTH_2 40 // maximumnumber of bytes in a right hand message
 #define PATTERNLENGTH_3 15 // maximumnumber of bytes in a air-mems message
 #define FILTER_CHANGE // comment out in order to build without the redundancy check
 

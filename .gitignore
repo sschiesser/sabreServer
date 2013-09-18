@@ -1,3 +1,12 @@
+
+.DS_Store
+
 /006/*
 /Project.xcconfig/*
 /bin/*
+
+bin/**/*
+006/**/*
+
+xcuserdata/
+project.xcworkspace/
