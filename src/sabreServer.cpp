@@ -19,8 +19,10 @@ void sabreServer::setup()
 	
 	serialThreadObject = new(threadedSerial);
 	OSCThreadObject = new(threadedOSC);
-    
+    OSCThreadObject2 = new(threadedOSC);
+
     OSCThreadObject->serialObject = serialThreadObject; // tell OSCThread about serialThread
+    OSCThreadObject2->serialObject = serialThreadObject; // tell OSCThread2 about serialThread
 
 	TTF.loadFont("lucidagrande.ttf", 8, 1, 1, 0);
 	TTFsmall.loadFont("lucidagrande.ttf", 8, 1, 0, 0);
@@ -32,11 +34,16 @@ void sabreServer::setup()
 	drawValues = 0;
     serialThreadObject->drawValues = 0;
 	menuState = 0;
-	
+    sendOscToSC = 0;
+
 	serialThreadObject->serialport = "/dev/tty.usbserial-A7005Ghs";
 	serialThreadObject->baudrate = 230400;
+    
 	OSCThreadObject->sendIP  = serialThreadObject->sendIP = "127.0.0.1";
-	OSCThreadObject->sendport = serialThreadObject->sendport = 40000;;
+	OSCThreadObject->sendport = serialThreadObject->sendport = 40000;
+    
+    OSCThreadObject2->sendIP  = serialThreadObject->sendIP = "127.0.0.1";
+	OSCThreadObject2->sendport = serialThreadObject->sendport = 57120; // default SC port
     
 	receiveport = 40001;
 	serialThreadObject->debounceTimeOut = 0;
@@ -72,10 +79,13 @@ void sabreServer::setup()
         startOSCfullspeed();
     }else{
         startOSC();
+        if(sendOscToSC){
+            startOSCforSC();
+        }
 	}
 	ofSetWindowPosition(0,44);
 
-//    dumpPrefs();
+    dumpPrefs();
 }
 
 
@@ -492,6 +502,27 @@ void sabreServer::stopOSCfullspeed()
 	redrawFlag = 1;
 }
 
+void sabreServer::startOSCforSC()
+{
+    if(OSCThreadObject2->status) {
+        OSCThreadObject2->stop(); // stops the thread, deletes the object which also closes the socket
+	}
+    // open an outgoing connection to sendIP:PORT
+	OSCThreadObject2->status = OSCThreadObject2->oscSender.setup( serialThreadObject->sendIP.c_str(), 57120);
+	if(OSCThreadObject2->status) {
+        OSCThreadObject2->start(); // the OSC thread
+	} else {
+        ofSystemAlertDialog("Sabre Server Unable to open OSC to SC Network "+serialThreadObject->sendIP+" on port  57120");
+	}
+}
+void sabreServer::stopOSCforSC()
+{
+	if(OSCThreadObject2->status) {
+        OSCThreadObject2->stop(); // stops the thread, deletes the object which also closes the socket
+		OSCThreadObject2->status = false;
+	}
+}
+
 void sabreServer::getSerialDeviceList()
 {
 	serialThreadObject->deviceList = serialThreadObject->serial.getDeviceList();
@@ -602,6 +633,7 @@ bool sabreServer::readPrefs()
 		OSCThreadObject->sendport = serialThreadObject->sendport = XML.getValue("sabre:network:sender:port", 40000);
                 
 		receiveport = XML.getValue("sabre:network:receiver:port", 40001);
+        sendOscToSC = XML.getValue("sabre:network:OSCtoSC", 0);
 
 		serialThreadObject->baudrate = XML.getValue("sabre:baudrate", 57600);
 		framerate = XML.getValue("sabre:framerate", 20);
@@ -767,6 +799,7 @@ void sabreServer::dumpPrefs()
 	printf("accelScale %2.12f\n", serialThreadObject->accelScale);
 	printf("OSCfullspeed %d\n", serialThreadObject->fullspeedOSC);
 	printf("OSCinterval %d\n", OSCThreadObject->OSCInterval);
+    printf("OSCtoSC %d\n", sendOscToSC);
     
 	for(i = 0; i < serialThreadObject->numKeyAddr; i++) {
 		printf("key %d\n", i);

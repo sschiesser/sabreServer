@@ -37,8 +37,11 @@ public:
     
     void startOSCfullspeed();
 	void stopOSCfullspeed();
+    
+    void startOSCforSC();
+    void stopOSCforSC();
 	
-	void keyReleased(int key);	
+	void keyReleased(int key);
 
 	void writePrefs();
 	void dumpPrefs();
@@ -61,6 +64,8 @@ public:
 	// class vars
 	threadedSerial	* serialThreadObject;
     threadedOSC	* OSCThreadObject;
+    threadedOSC	* OSCThreadObject2;
+
 
     ofxOscReceiver receiver;
 	int		receiveport;
@@ -109,4 +114,5 @@ public:
 	bool	menuState;
 	int		numMenuItems;
 	ofPoint menuClickPos;
+    bool    sendOscToSC;
 };
