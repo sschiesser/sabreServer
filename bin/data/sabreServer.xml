@@ -19,6 +19,7 @@
         <receiver>
             <port>40003</port>
         </receiver>
+        <OSCtoSC>1</OSCtoSC>
     </network>
     <thresholds>
         <down>0.15</down>
@@ -243,6 +244,6 @@
     <midinote>
         <oscaddress>/sabre/note</oscaddress>
     </midinote>
-    <serialport>/dev/tty.usbmodem411</serialport>
     <display>1</display>
+    <serialport>/dev/tty.Bluetooth-PDA-Sync</serialport>
 </sabre>
