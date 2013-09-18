@@ -164,13 +164,15 @@ void threadedSerial::serialparse(unsigned char *c)
 	int i, j;
 	long sum;
 	
-    // do the circular buffer thing three time independently
+    // do the circular buffer thing three times independently
     for (j = 0; j < 3; j++) {
         
         // push bytes forward in the three circular buffers "serialStream[j]"
         for (i = 0; i < streamSize[j]-1; i++) {
             serialStream[j][i] = serialStream[j][i+1];
+//            printf("%02x ", serialStream[j][i]);
         }
+//        printf("#END#	\n");
         serialStream[j][streamSize[j]-1] = c[0]; // append new byte to each serialStream[j] buffer
         
     }
@@ -179,12 +181,13 @@ void threadedSerial::serialparse(unsigned char *c)
 	if (serialStream[0][0] == 65) { // packet start marker
         if(serialStream[0][1] == 240) {	// left hand packet
             if(serialStream[0][22] == 90) {
-//                printf("\ninput 0 ");
+//                printf("\ninput 0:\n-------\n");
 
                 for(i = 0; i < 20; i++) { // collect n-2 bytes into buffer
                     input[0][i] = serialStream[0][i+2];
-//                    printf("%x ", input[0][i]);
+//                    printf("%02x ", input[0][i]);
                 }
+//                printf("\n");
                 haveInput[0] = true;
                 parseLeft();
                 calcKeycode();
@@ -194,12 +197,13 @@ void threadedSerial::serialparse(unsigned char *c)
     
     if (serialStream[1][0] == 65) { // packet start marker
         if(serialStream[1][1] == 241) { // right hand packet
-            if(serialStream[1][38] == 90) {
-//                printf("\ninput 1 ");
-                for(i = 0; i < 36; i++) { // collect n-2 bytes into buffer
+            if(serialStream[1][39] == 90) {
+//                printf("\ninput 1:\n--------\n");
+                for(i = 0; i < 37; i++) { // collect n-2 bytes into buffer
                     input[1][i] = serialStream[1][i+2];
-//                    printf("%x ", input[1][i]);
+//                    printf("%02x ", input[1][i]);
                 }
+//                printf("\n");
                 haveInput[1] = true;
                 parseRight();
                 calcKeycode();
@@ -211,11 +215,12 @@ void threadedSerial::serialparse(unsigned char *c)
     if (serialStream[2][0] == 65) { // packet start marker
         if(serialStream[2][1] == 242) { // AirMems packet
             if(serialStream[2][14] == 90) {
-//                printf("\ninput 2 ");
+//                printf("\ninput 2:\-------\n");
                 for(i = 0; i < 12; i++) { // collect n-2 bytes into buffer
                     input[2][i] = serialStream[2][i+2];
-//                    printf("%x ", input[2][i]);
+//                    printf("%02x ", input[2][i]);
                 }
+//                printf("\n");
                 haveInput[2] = true;
                 parseAir();
            }
@@ -325,9 +330,9 @@ void threadedSerial::parseLeft()
 #endif
 		}
         
-		button[0] = (input[0][16] & 0x8) >> 3;
-		button[1] = (input[0][16] & 0x10) >> 4;
-		button[2] = (input[0][16] & 0x20) >> 5;
+//		button[0] = (input[0][16] & 0x8) >> 3;
+		button[2] = (input[0][16] & 0x10) >> 4;
+		button[0] = (input[0][16] & 0x20) >> 5;
 		
 		for(int i = 0; i < 3; i++) {
 			if(button[i] != buttonOld[i]) {
@@ -435,9 +440,9 @@ void threadedSerial::parseRight()
 #endif
 		}
         // IMU parsing in separate function() using same input buffer
-        batteryLevelRight = input[1][32] & 0xF;
-        timestampRight = input[1][33] + (input[1][34] << 8);
-        linkQualityRight  = input[1][35];
+        batteryLevelRight = input[1][33] & 0xF;
+        timestampRight = input[1][34] + (input[1][35] << 8);
+        linkQualityRight  = input[1][36];
 
 	}
 }
@@ -448,25 +453,25 @@ void threadedSerial::parseIMU()
 	if(haveInput[1]) {
 		
 		
-		raw[0] = input[1][15] + ((input[1][18] & 0xE0) << 3); // accel
-		raw[1] = input[1][16] + ((input[1][18] & 0x1C) << 6);
-		raw[2] = input[1][17] + ((input[1][19] & 0xE0) << 3);
+		raw[0] = input[1][29] + ((input[1][32] & 0xE0) << 3); // accelerometer
+		raw[1] = input[1][30] + ((input[1][32] & 0x1C) << 6);
+		raw[2] = input[1][31] + ((input[1][33] & 0xE0) << 3);
 		
-		raw[3] = input[1][20] + (input[1][24] << 8); // gyro
-		raw[4] = input[1][21] + (input[1][25] << 8);
-		raw[5] = input[1][22] + (input[1][26] << 8);
+		raw[3] = input[1][16] + (input[1][20] << 8); // gyroscope
+		raw[4] = input[1][17] + (input[1][21] << 8);
+		raw[5] = input[1][18] + (input[1][22] << 8);
 
-		raw[9] = input[1][23] + (input[1][27] << 8); // temp
+		raw[9] = input[1][15] + (input[1][19] << 8); // temperature
 		
-		raw[6] = input[1][28] + ((input[1][31] & 0xF0) << 4); // compass / magneto
-		raw[7] = input[1][29] + ((input[1][31] & 0xF ) << 8);
-		raw[8] = input[1][30] + ((input[1][32] & 0xF0) << 4);
+		raw[6] = input[1][23] + (input[1][26] << 8); // compass / magneto
+		raw[7] = input[1][24] + (input[1][27] << 8);
+		raw[8] = input[1][25] + (input[1][28] << 8);
 		
 		
 		// accelerometer
 		for(i = 0; i < 3; i++) {
-			if( raw[i] >= 32768 ) {
-				raw[i] -= 65535;
+			if( raw[i] >= 1024 ) {
+				raw[i] -= 2047;
 			}
 			rawIMU[i] = raw[i] + accelOffset;
 			IMU[i] = rawIMU[i] * accelScale;
