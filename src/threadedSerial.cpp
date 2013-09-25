@@ -34,8 +34,8 @@ threadedSerial::threadedSerial()
 	gyroOffset = 32768;
 	gyroScale = scale16;
 	
-	magnetoResolution = 8;
-	magnetoOffset = 2047;
+	magnetoResolution = 12;
+	magnetoOffset = 2048;
 	magnetoScale = scale12;
 	
 	tempOffset = 32768;
@@ -215,7 +215,7 @@ void threadedSerial::serialparse(unsigned char *c)
     if (serialStream[2][0] == 65) { // packet start marker
         if(serialStream[2][1] == 242) { // AirMems packet
             if(serialStream[2][14] == 90) {
-//                printf("\ninput 2:\-------\n");
+//                printf("\ninput 2:\n-------\n");
                 for(i = 0; i < 12; i++) { // collect n-2 bytes into buffer
                     input[2][i] = serialStream[2][i+2];
 //                    printf("%02x ", input[2][i]);
@@ -330,7 +330,7 @@ void threadedSerial::parseLeft()
 #endif
 		}
         
-//		button[0] = (input[0][16] & 0x8) >> 3;
+		button[1] = (input[0][16] & 0x8) >> 3;
 		button[2] = (input[0][16] & 0x10) >> 4;
 		button[0] = (input[0][16] & 0x20) >> 5;
 		
@@ -386,7 +386,13 @@ void threadedSerial::parseRight()
 		keys[23].raw += ((input[1][14] & 0xC) << 6);
         keys[24].raw += ((input[1][14] & 0x3) << 8);
          
-		int now = ofGetElapsedTimeMillis();
+//        printf("raw keys right: ");
+//        for (int i = 0; i < 12; i++) { // 12 keys
+//            printf("%03x ", keys[i+13].raw);
+//        }
+//        printf("\n");
+		
+        int now = ofGetElapsedTimeMillis();
 		
 		for (int i = 0; i < 12; i++) { // 12 keys
 			j = i+13; // the keys 13 to 25
