@@ -740,7 +740,15 @@ bool sabreServer::readPrefs()
                 serialThreadObject->airValue.minimum = XML.getValue("air:minimum", 0, -20.0);
                 serialThreadObject->airValue.maximum = XML.getValue("air:maximum", 120, 80.0);
                 if(serialThreadObject->airValue.maximum != serialThreadObject->airValue.minimum) {
-                    serialThreadObject->airValue.scale = 1.0 / (serialThreadObject->airValue.maximum - serialThreadObject->airValue.minimum);
+                    if(serialThreadObject->airValue.maximum > abs(serialThreadObject->airValue.minimum)) {
+                        serialThreadObject->airValue.scale = ( 1.0 / serialThreadObject->airValue.maximum) * 0.5;
+                    } else if(serialThreadObject->airValue.maximum < abs(serialThreadObject->airValue.minimum) ){
+                        serialThreadObject->airValue.scale = ( 1.0 / abs(serialThreadObject->airValue.minimum)) * 0.5;
+                    }else{
+                        serialThreadObject->airValue.scale = 0.0;
+                    }
+
+                    
                 }else{
                     serialThreadObject->airValue.scale = 0.0;
                 }
@@ -816,7 +824,7 @@ void sabreServer::dumpPrefs()
 	}
 	printf("keycode\n    oscaddress %s\n", serialThreadObject->keycodeaddress.c_str());
 
-    for(i = 0; i < serialThreadObject->numKeyAddr; i++) {
+    for(i = 0; i < serialThreadObject->numAirAddr; i++) {
 		printf("airValues %d\n", i);
 		printf("    minimum %f\n", serialThreadObject->airValue.minimum);
 		printf("    maximum %f\n", serialThreadObject->airValue.maximum);

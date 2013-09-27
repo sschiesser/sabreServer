@@ -574,7 +574,7 @@ void threadedSerial::parseAir()
             if(airValue.maximum > abs(airValue.minimum)) {
                 airValue.scale = ( 1.0 / airValue.maximum) * 0.5;
             } else if(airValue.maximum < abs(airValue.minimum) ){
-                 airValue.scale = ( 1.0 / airValue.minimum) * 0.5;
+                 airValue.scale = ( 1.0 / abs(airValue.minimum)) * 0.5;
             }else{
                 airValue.scale = 0.0;
             }
