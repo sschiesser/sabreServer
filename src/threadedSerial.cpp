@@ -105,6 +105,9 @@ threadedSerial::threadedSerial()
     linkQualityRight = 0;
     linkQualityAir = 0;
     
+    airValue.calibrationFlag = true;
+    airValue.calibrationValue = 0;
+    airValue.calibrationCounter = 0;
 }
 
 threadedSerial::~threadedSerial()
@@ -538,15 +541,21 @@ void threadedSerial::parseAir()
         
         //collect atmospheric pressure value index 50-300 at each startup to have atmo-pressure offset 
         if(airValue.calibrationFlag) {
-            if(airValue.calibrationCounter < 50) {
+            if(airValue.calibrationCounter == 0) {
+                printf("start calibrating atmospheric pressure after %lld ms\n", ofGetElapsedTimeMillis());
+            }
+            if(airValue.calibrationCounter < 5) {
                 airValue.offset = air[0];
             }else {
-                if(airValue.calibrationCounter < 300) {
+                if(airValue.calibrationCounter < 25) {
                     airValue.calibrationValue += air[0];
-                    airValue.offset = airValue.calibrationValue / (airValue.calibrationCounter - 50);
+                    printf("air[0] calib %f\n", air[0]);
                 }
-                if(airValue.calibrationCounter >= 300){
-                    airValue.calibrationFlag = 0; // lock up after you
+                if(airValue.calibrationCounter >= 25){
+                    airValue.offset = airValue.calibrationValue / (airValue.calibrationCounter - 5);
+                    airValue.calibrationFlag = false; // lock up after you
+                    printf("airValue.offset after calibration is %f\n", airValue.offset);
+                    printf("finished calibrating atmospheric pressure after %lld ms\n", ofGetElapsedTimeMillis());
                 }
             }
             airValue.calibrationCounter++;
@@ -574,6 +583,10 @@ void threadedSerial::parseAir()
         airValue.continuous = airValue.relative * airValue.scale + 0.5;
         airValue.continuous = CLAMP( airValue.continuous, 0.0, 1.0);
 	}
+    
+    if(fullspeedOSC == false){
+        haveInput[2] = false;
+    }
 }
 
 void threadedSerial::calcKeycode()
@@ -969,12 +982,18 @@ void threadedSerial::draw()
                 ofSetColor(0, 0, 0, 255);
                 ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((airValue.continuous - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
             } else {
-                ofNoFill();
-                ofSetColor(91, 91, 91, 255);
-                ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
+                if(airValue.calibrationFlag){
+                    ofFill();
+                    ofSetColor(255, 0, 0, 255);
+                    ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
+                }else{
+                    ofNoFill();
+                    ofSetColor(91, 91, 91, 255);
+                    ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
+                }
                 ofFill();
                 ofSetColor(0, 0, 0, 127);
-                ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((airValue.continuous - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
+                ofRect( rightColumn + imuColumnLeft + CLAMP((104 * airValue.continuous), 0, 104), yy-9, 2, 12);
             }
             
             

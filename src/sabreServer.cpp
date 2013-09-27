@@ -436,6 +436,10 @@ void sabreServer::startSerial()
 		ofSystemAlertDialog("SABRe Server \n"+status1+serialThreadObject->serialport);
 	}
 	redrawFlag = 1;
+    
+    serialThreadObject->airValue.calibrationFlag = true;
+    serialThreadObject->airValue.calibrationValue = 0;
+    serialThreadObject-> airValue.calibrationCounter = 0;
 }
 
 void sabreServer::stopSerial()
@@ -733,8 +737,8 @@ bool sabreServer::readPrefs()
 						serialThreadObject->airaddresses[ID] = str1;
 					}
 				}
-                serialThreadObject->airValue.minimum = XML.getValue("air:minimum", 0, 0);
-                serialThreadObject->airValue.maximum = XML.getValue("air:maximum", 120, 0);
+                serialThreadObject->airValue.minimum = XML.getValue("air:minimum", 0, -20.0);
+                serialThreadObject->airValue.maximum = XML.getValue("air:maximum", 120, 80.0);
                 if(serialThreadObject->airValue.maximum != serialThreadObject->airValue.minimum) {
                     serialThreadObject->airValue.scale = 1.0 / (serialThreadObject->airValue.maximum - serialThreadObject->airValue.minimum);
                 }else{
@@ -906,8 +910,8 @@ void sabreServer::writeScaling()
 	}
     XML.removeTag("air:minimum", 0);
     XML.removeTag("air:maximum", 0);
-    XML.setValue("air:minimum", (int)serialThreadObject->airValue.minimum, 0);
-    XML.setValue("air:maximum", (int)serialThreadObject->airValue.maximum, 0);
+    XML.setValue("air:minimum", serialThreadObject->airValue.minimum, 0);
+    XML.setValue("air:maximum", serialThreadObject->airValue.maximum, 0);
     
 	XML.popTag();
 	XML.saveFile("sabreServer.xml");
@@ -1155,11 +1159,13 @@ void sabreServer::mousePressed(int x, int y, int button)
     
     // click in calibrate air
     if(x > 502 && x < 627 && y > 480 && y < 500) {
-		if(serialThreadObject->airValue.calibratePressureRange != 0){
-			serialThreadObject->airValue.calibratePressureRange = 0;
+		if(serialThreadObject->airValue.calibratePressureRange == true){
+            serialThreadObject->airValue.calibratePressureRange = false;
+            printf("finished calibrating air with values minimum %f maximum %f\n",serialThreadObject->airValue.minimum, serialThreadObject->airValue.maximum);
+            
             writeScaling();
         } else {
-            serialThreadObject->airValue.calibratePressureRange = 1;
+            serialThreadObject->airValue.calibratePressureRange = true;
             resetAirCalibrate();
         }
     }
