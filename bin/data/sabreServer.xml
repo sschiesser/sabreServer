@@ -229,8 +229,8 @@
     </button>
     <air id="0">
         <oscaddress>/sabre/air/pressure</oscaddress>
-        <minimum>32768</minimum>
-        <maximum>-32768</maximum>
+        <minimum>-50.500000000</minimum>
+        <maximum>94.500000000</maximum>
     </air>
     <air id="1">
         <oscaddress>/sabre/air/temperature</oscaddress>
@@ -245,5 +245,5 @@
         <oscaddress>/sabre/note</oscaddress>
     </midinote>
     <display>1</display>
-    <serialport>/dev/tty.Bluetooth-PDA-Sync</serialport>
+    <serialport>/dev/tty.usbmodem1411</serialport>
 </sabre>
