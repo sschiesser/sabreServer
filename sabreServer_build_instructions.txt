@@ -85,6 +85,33 @@ a)
             }
         }
     </code>
+	
+	and at the end of the function change:
+	
+	<code>
+		tcsetattr(fd,TCSANOW,&options);
+	 </code>
+	 
+	 to
+	 
+	 <code>
+	if(tcsetattr(fd, TCSAFLUSH, &options) != -1) {
+		ofLog(OF_LOG_NOTICE, "Opened serial line device  %s", portName.c_str());
+	} else {
+		ofLog(OF_LOG_ERROR, "** ERROR ** could not set params to ioctl of device %s", portName.c_str());
+		::close(fd);
+		return false;
+	}
+	</code>
+	
+	and add the return value after:
+	
+	<code>
+		bInited = true;
+		ofLog(OF_LOG_NOTICE,"success in opening serial connection");
+
+    	return true;
+	</code>
 
 
 b)
