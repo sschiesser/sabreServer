@@ -1038,7 +1038,7 @@ void sabreServer::mouseReleased()
 void sabreServer::mousePressed(int x, int y, int button)
 {
 	int i;
-	printf("mousepressed at %d %d\n", x, y);
+//	printf("mousepressed at %d %d\n", x, y);
 	ofRect(295, 36, 295+124, 36+20);
 	
 	// click in start/stope values
