@@ -134,6 +134,7 @@ threadedSerial::threadedSerial()
     airValue.calibrationFlag = true;
     airValue.calibrationValue = 0;
     airValue.calibrationCounter = 0;
+    
 }
 
 threadedSerial::~threadedSerial()
@@ -147,11 +148,14 @@ threadedSerial::~threadedSerial()
 void threadedSerial::start()
 {
 	startThread(true, false);   // blocking, verbose
+    serial.flush(true, true);
+
 }
 
 void threadedSerial::stop()
 {
 	stopThread();
+    serial.flush(true, true);
 }
 
 //--------------------------
@@ -182,8 +186,6 @@ void threadedSerial::readSerial()
 	
     // read the entire content of the serial buffer into the serailStream and input arrays
 	while( (nRead = serial.readBytes(bytesReturned, 1)) > 0){
-//		nTimesRead++;	
-//		nBytesRead = nRead;
 		serialparse(bytesReturned);
 	}
 }
@@ -210,6 +212,7 @@ void threadedSerial::serialparse(unsigned char *c)
 	if (serialStream[0][0] == 65) { // packet start marker
         if(serialStream[0][1] == 240) {	// left hand packet
             if(serialStream[0][22] == 90) {
+
 //                printf("\ninput 0:\n-------\n");
 
                 for(i = 0; i < 20; i++) { // collect n-2 bytes into buffer
@@ -227,6 +230,7 @@ void threadedSerial::serialparse(unsigned char *c)
     if (serialStream[1][0] == 65) { // packet start marker
         if(serialStream[1][1] == 241) { // right hand packet
             if(serialStream[1][39] == 90) {
+
 //                printf("\ninput 1:\n--------\n");
                 for(i = 0; i < 37; i++) { // collect n-2 bytes into buffer
                     input[1][i] = serialStream[1][i+2];
@@ -244,6 +248,7 @@ void threadedSerial::serialparse(unsigned char *c)
     if (serialStream[2][0] == 65) { // packet start marker
         if(serialStream[2][1] == 242) { // AirMems packet
             if(serialStream[2][14] == 90) {
+
 //                printf("\ninput 2:\n-------\n");
                 for(i = 0; i < 12; i++) { // collect n-2 bytes into buffer
                     input[2][i] = serialStream[2][i+2];
@@ -899,7 +904,8 @@ void threadedSerial::draw()
 //			ofFill();
 //			ofSetColor(200, 200, 200, 255);
 //			ofRect(leftColumn-1, 79, width-leftColumn-5, height-anchory-15);
-			
+            ofSetColor(0, 127, 255, 255);
+
 			for(i = 0; i < 25; i++) { // stripes
 				if((i % 2) == 0){
 					ofFill();

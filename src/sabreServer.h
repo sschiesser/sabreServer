@@ -141,4 +141,5 @@ public:
 	int		numMenuItems;
 	ofPoint menuClickPos;
     bool    sendOscToSC;
+
 };

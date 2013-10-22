@@ -100,25 +100,21 @@ void sabreServer::setup()
 	
  	getSerialDeviceList();
 	
-	startSerial();
-    if(serialThreadObject->fullspeedOSC){
-        startOSCfullspeed();
-    }else{
-        startOSC();
-        if(sendOscToSC){
-            startOSCforSC();
-        }
-	}
+    // we don't start the serialThread automatically
+    serialThreadObject->status = false;
+    
 	ofSetWindowPosition(0,44);
 
-    dumpPrefs();
+//    dumpPrefs();
 }
 
 
 void sabreServer::update()
 {
-	float now = ofGetElapsedTimef();
-	
+    
+// TODO trying to fix serial start problems: not solved yet!
+//	float now = ofGetElapsedTimef();
+
 //	if(runOnce == 1) {
 //		if(now > (runOnceStart + runOnceDelay) )
 //		{
@@ -440,22 +436,24 @@ void sabreServer::exit()
 
 void sabreServer::startSerial()
 {
-//	if(serialThreadObject->status) {
-//		serialThreadObject->serial.close();
-//		serialThreadObject->stop(); // the thread
-//	}
+	if(serialThreadObject->status) {
+		serialThreadObject->serial.close();
+		serialThreadObject->stop(); // the thread
+	}
 	
 	serialThreadObject->status = serialThreadObject->serial.setup(serialThreadObject->serialport, serialThreadObject->baudrate);
     
     // check if port is REALLY open, how?
     
 	if(serialThreadObject->status) {
+        serialThreadObject->serial.flush(true, true);
 		status1 = "Device open ";//+serialThreadObject->serialport+" "+ofToString(serialThreadObject->baudrate);
 // 		ofSetWindowTitle(serialThreadObject->serialport);
 		ofSetWindowTitle(titleString+" - Connection OK");
 		serialThreadObject->start(); // the serial thread
 	} else {
 		status1 = "Unable to open ";//+serialThreadObject->serialport;
+        serialThreadObject->serial.flush(true, true);
 		serialThreadObject->stop(); // the thread
 		ofSetWindowTitle(titleString+" - No Connection");
 
@@ -1054,6 +1052,15 @@ void sabreServer::mousePressed(int x, int y, int button)
             stopSerial();
             ofSleepMillis(5);
 			startSerial();
+            
+            if(serialThreadObject->fullspeedOSC){
+                startOSCfullspeed();
+            }else{
+                startOSC();
+                if(sendOscToSC){
+                    startOSCforSC();
+                }
+            }
 			drawValues = 1;
             serialThreadObject->drawValues = 1;
 //			serialThreadObject->status = true;
@@ -1109,6 +1116,15 @@ void sabreServer::mousePressed(int x, int y, int button)
                         stopSerial();
                         ofSleepMillis(5);
 						startSerial();
+                        
+                        if(serialThreadObject->fullspeedOSC){
+                            startOSCfullspeed();
+                        }else{
+                            startOSC();
+                            if(sendOscToSC){
+                                startOSCforSC();
+                            }
+                        }
 					
 						XML.pushTag("sabre", 0);
 						XML.removeTag("serialport", 0);

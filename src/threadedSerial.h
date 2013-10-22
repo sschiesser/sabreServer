@@ -221,7 +221,7 @@ public:
     string      linkQualityAddressAir;
     
     bool        drawValues;
-    
+
 };
 
 #endif
