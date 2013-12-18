@@ -100,7 +100,6 @@ void threadedOSC::sendOSC()
         oscMsg[62].addIntArg( serialObject->systemTimestamp );
 		oscSender.sendMessage( oscMsg[62] );
         
-		
 		for(int i = 0; i < 25; i++) { // continuous key values
 			if(serialObject->keys[i].changed) {
 				oscMsg[i+16].clear();

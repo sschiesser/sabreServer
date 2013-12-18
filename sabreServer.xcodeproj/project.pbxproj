@@ -96,6 +96,7 @@
 		2fd4b0329909d3527f0034948840df14 /* UdpSocket.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = UdpSocket.h; path = ../../../addons/ofxOsc/libs/oscpack/src/ip/UdpSocket.h; sourceTree = SOURCE_ROOT; };
 		304A7087176EF75E000405A8 /* threadedOSC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = threadedOSC.h; sourceTree = "<group>"; };
 		304A7088176EF75E000405A8 /* threadedOSC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = threadedOSC.cpp; sourceTree = "<group>"; };
+		30AECCCA181576A000667649 /* sabreAir.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sabreAir.h; sourceTree = "<group>"; };
 		3b361208cd4107e479f04e7bce6d93aa /* NetworkingUtils.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = NetworkingUtils.cpp; path = ../../../addons/ofxOsc/libs/oscpack/src/ip/posix/NetworkingUtils.cpp; sourceTree = SOURCE_ROOT; };
 		444657a12e59d0ed86981498fccd5fcc /* TimerListener.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = TimerListener.h; path = ../../../addons/ofxOsc/libs/oscpack/src/ip/TimerListener.h; sourceTree = SOURCE_ROOT; };
 		48974f980f51769171d0b2f5e519dd28 /* IpEndpointName.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = IpEndpointName.h; path = ../../../addons/ofxOsc/libs/oscpack/src/ip/IpEndpointName.h; sourceTree = SOURCE_ROOT; };
@@ -328,6 +329,7 @@
 				0E18AA8B1710127A00284BD9 /* threadedSerial.cpp */,
 				304A7087176EF75E000405A8 /* threadedOSC.h */,
 				304A7088176EF75E000405A8 /* threadedOSC.cpp */,
+				30AECCCA181576A000667649 /* sabreAir.h */,
 				0E18AA871710127A00284BD9 /* sabreKeys.h */,
 				0E18AA881710127A00284BD9 /* sabreMidiNote.h */,
 				0E18AA861710127A00284BD9 /* main.cpp */,

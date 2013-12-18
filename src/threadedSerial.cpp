@@ -168,10 +168,13 @@ void threadedSerial::threadedFunction()
 			haveInput[2] = 0;
 			
 			readSerial(); // this is the threaded serial polling call
+            
             if(fullspeedOSC) {
                 sendOSC();
             }
 //            ofSleepMillis(1);
+            
+            
             usleep(500);	//mac sleeps in microseconds = 1/2 millisecond interval for serialThread
 			unlock();
 		}
