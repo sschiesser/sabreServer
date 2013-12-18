@@ -91,10 +91,10 @@ void threadedOSC::sendOSC()
         oscMsg[61].addIntArg( serialObject->timestampLeft );
 		oscSender.sendMessage( oscMsg[61] );
         
-		serialObject->systime = ofGetElapsedTimeMillis();
-		serialObject->systemTimestamp = serialObject->systime - serialObject->oldSystime;
-		serialObject->oldSystime = serialObject->systime;
-        
+//		serialObject->systime = ofGetElapsedTimeMillis();
+//		serialObject->systemTimestamp = serialObject->systime - serialObject->oldSystime;
+//		serialObject->oldSystime = serialObject->systime;
+    
         oscMsg[62].clear();
 		oscMsg[62].setAddress( serialObject->timestampAddressServer ); // timestamp
         oscMsg[62].addIntArg( serialObject->systemTimestamp );
@@ -114,14 +114,17 @@ void threadedOSC::sendOSC()
 				oscMsg[i+16].setAddress( serialObject->keys[i].oscaddress+"/down");
 				oscMsg[i+16].addIntArg( serialObject->keys[i].binary );
 				oscSender.sendMessage( oscMsg[i+16] );
+                serialObject->keys[i].binaryChanged = false;
+
 			}
-		}	
+		}
 		for(int i = 0; i < 25; i++) { // raw key values
 			if(serialObject->keys[i].changed) {
 				oscMsg[i+16].clear();
 				oscMsg[i+16].setAddress( serialObject->keys[i].oscaddress+"/raw");
 				oscMsg[i+16].addIntArg( serialObject->keys[i].raw );
 				oscSender.sendMessage( oscMsg[i+16] );
+                serialObject->keys[i].changed = false;
 			}
 		}	
 		if(serialObject->keycodeChanged) { // keycode
@@ -144,7 +147,8 @@ void threadedOSC::sendOSC()
 				oscMsg[i+44].clear();
 				oscMsg[i+44].setAddress( serialObject->buttonaddresses[2-i] );
 				oscMsg[i+44].addIntArg( serialObject->button[i] );
-				oscSender.sendMessage( oscMsg[i+44] );	
+				oscSender.sendMessage( oscMsg[i+44] );
+                serialObject->buttonChanged[i] = false;
 			}
 		}
 
@@ -237,8 +241,13 @@ void threadedOSC::sendOSC()
 		oscSender.sendMessage( oscMsg[14] );
         
         // reset flags
-		if(serialObject->haveInput[0]) serialObject->haveInput[0] = false;
-        if(serialObject->haveInput[1]) serialObject->haveInput[1] = false;
+    if(serialObject->haveInput[0]) {
+        serialObject->haveInput[0] = false;
+    }
+    if(serialObject->haveInput[1]) {
+        serialObject->haveInput[1] = false;
+    }
+    
 
 //    }
 //	if(serialObject->haveInput[2]) { // AirMems packet

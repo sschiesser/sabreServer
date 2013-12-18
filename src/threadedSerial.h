@@ -48,7 +48,7 @@
 
 #define MAXNUM 64 // maximum number messages to allocate
 #define PATTERNLENGTH_1 23 // maximumnumber of bytes in a left hand message
-#define PATTERNLENGTH_2 40 // maximumnumber of bytes in a right hand message
+#define PATTERNLENGTH_2 42 // maximumnumber of bytes in a right hand message
 #define PATTERNLENGTH_3 15 // maximumnumber of bytes in a air-mems message
 #define FILTER_CHANGE // comment out in order to build without the redundancy check
 
@@ -107,6 +107,7 @@ public:
 	unsigned char input[3][PATTERNLENGTH_2];    // working buffer for each packet type
 	bool		haveInput[3];				// flags to signal a full packet was parsed successfully
 	bool        fullspeedOSC;               // flag for outputting OSC from serial or from OSC thread 0 = OSC thread 1 = serialThread
+    bool        sendRawValues;
     
 	sabreKeys	keys[32];
 	sabreMidiNote midiNote[128];
@@ -199,8 +200,13 @@ public:
 	int			midinote;
 	bool		validMidiNote;
 
-	long		systime;
-	long		oldSystime;
+	long		systimeL;
+	long		systimeR;
+	long		oldSystimeL;
+	long		oldSystimeR;
+    long		deltaTimeL;
+    long		deltaTimeR;
+
 	long		systemTimestamp;
     
     // OSC sender addresses
@@ -219,9 +225,13 @@ public:
     string      linkQualityAddressLeft;
     string      linkQualityAddressRight;
     string      linkQualityAddressAir;
-    
     bool        drawValues;
 
+    int         OSCsendingInterval;
+    long        OSCtime;
+    long        OSCprevTime;
+    int         OSCcounter;
+    int         numOSCloops;
 };
 
 #endif

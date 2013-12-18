@@ -106,11 +106,11 @@ threadedSerial::threadedSerial()
     IMU[5] = 0.0f;
     
     raw[6] = 0;
-    IMU[6] = 2,147,483,648.0f;
+    IMU[6] = 2147483648.0f;
     raw[7] = 0;
-    IMU[7] = 2,147,483,648.0f;
+    IMU[7] = 2147483648.0f;
     raw[8] = 0;
-    IMU[8] = 2,147,483,648.0f;
+    IMU[8] = 2147483648.0f;
     
     raw[9] = 0;
     IMU[9] = 0.0f;
@@ -134,6 +134,13 @@ threadedSerial::threadedSerial()
     airValue.calibrationFlag = true;
     airValue.calibrationValue = 0;
     airValue.calibrationCounter = 0;
+    
+    OSCprevTime = ofGetElapsedTimeMillis();
+    
+    keycode = 0;
+    midinote = 67;
+    validMidiNote = true;
+    OSCcounter = 0;
     
 }
 
@@ -169,11 +176,21 @@ void threadedSerial::threadedFunction()
 			
 			readSerial(); // this is the threaded serial polling call
             
-            if(fullspeedOSC) {
-                sendOSC();
-            }
-//            ofSleepMillis(1);
+//            OSCcounter++;
+//
+//            if(OSCcounter >= numOSCloops) {
+//                printf("calling OSC sending at time %ld\n", OSCtime);
+//                sendOSC();
+//                OSCcounter = 0;
+//                
+//            }
             
+            
+            OSCtime = ofGetElapsedTimeMillis();
+            if(OSCtime >= (OSCprevTime + OSCsendingInterval) ){
+                sendOSC();
+                OSCprevTime = OSCtime;
+            }
             
             usleep(500);	//mac sleeps in microseconds = 1/2 millisecond interval for serialThread
 			unlock();
@@ -200,46 +217,48 @@ void threadedSerial::serialparse(unsigned char *c)
 	
     // do the circular buffer thing three times independently
     for (j = 0; j < 3; j++) {
-        
         // push bytes forward in the three circular buffers "serialStream[j]"
         for (i = 0; i < streamSize[j]-1; i++) {
             serialStream[j][i] = serialStream[j][i+1];
-//            printf("%02x ", serialStream[j][i]);
         }
-//        printf("#END#	\n");
         serialStream[j][streamSize[j]-1] = c[0]; // append new byte to each serialStream[j] buffer
-        
     }
 
 	// pattern matching
 	if (serialStream[0][0] == 65) { // packet start marker
         if(serialStream[0][1] == 240) {	// left hand packet
             if(serialStream[0][22] == 90) {
-
-//                printf("\ninput 0:\n-------\n");
-
                 for(i = 0; i < 20; i++) { // collect n-2 bytes into buffer
                     input[0][i] = serialStream[0][i+2];
-//                    printf("%02x ", input[0][i]);
                 }
-//                printf("\n");
                 haveInput[0] = true;
                 parseLeft();
                 calcKeycode();
             }
         }
     }
+    // v3.5 comm structure
+//    if (serialStream[1][0] == 65) { // packet start marker
+//        if(serialStream[1][1] == 241) { // right hand packet
+//            if(serialStream[1][41] == 90) {
+//                for(i = 0; i < 39; i++) { // collect n-2 bytes into buffer
+//                    input[1][i] = serialStream[1][i+2];
+//                }
+//                haveInput[1] = true;
+//                parseRight();
+//                calcKeycode();
+//                parseIMU();
+//            }
+//        }
+//    }
     
+    // v3.4 comm structure
     if (serialStream[1][0] == 65) { // packet start marker
         if(serialStream[1][1] == 241) { // right hand packet
             if(serialStream[1][39] == 90) {
-
-//                printf("\ninput 1:\n--------\n");
                 for(i = 0; i < 37; i++) { // collect n-2 bytes into buffer
                     input[1][i] = serialStream[1][i+2];
-//                    printf("%02x ", input[1][i]);
                 }
-//                printf("\n");
                 haveInput[1] = true;
                 parseRight();
                 calcKeycode();
@@ -251,13 +270,9 @@ void threadedSerial::serialparse(unsigned char *c)
     if (serialStream[2][0] == 65) { // packet start marker
         if(serialStream[2][1] == 242) { // AirMems packet
             if(serialStream[2][14] == 90) {
-
-//                printf("\ninput 2:\n-------\n");
                 for(i = 0; i < 12; i++) { // collect n-2 bytes into buffer
                     input[2][i] = serialStream[2][i+2];
-//                    printf("%02x ", input[2][i]);
                 }
-//                printf("\n");
                 haveInput[2] = true;
                 parseAir();
            }
@@ -307,62 +322,52 @@ void threadedSerial::parseLeft()
         
         keys[12].raw += (input[0][16] & 0xC0) << 2;
 
-//        printf("\nraw left ");
-//        for (int i = 0; i < 13; i++) { // 13 keys
-//            printf("%lx ", keys[i].raw);
-//        }
-
-        
         int now = ofGetElapsedTimeMillis();
 		for (int i = 0; i < 13; i++) { // 13 keys
-			j = i;
             
-			if(keys[j].inverted) {
-				keys[j].raw = 1023 - keys[j].raw;
+			if(keys[i].inverted) {
+				keys[i].raw = 1023 - keys[i].raw;
 			}
 			
-			if(calibrate[j]) {
-				if(keys[j].raw < keys[j].minimum){
-					keys[j].minimum = keys[j].raw;
+			if(calibrate[i]) {
+				if(keys[i].raw < keys[i].minimum){
+					keys[i].minimum = keys[i].raw;
 				}
-				if(keys[j].raw > keys[j].maximum){
-					keys[j].maximum = keys[j].raw;
+				if(keys[i].raw > keys[i].maximum){
+					keys[i].maximum = keys[i].raw;
 				}
-				if(keys[j].maximum != keys[j].minimum) {
-					keys[j].scale = 1.0 / (keys[j].maximum - keys[j].minimum);
+				if(keys[i].maximum != keys[i].minimum) {
+					keys[i].scale = 1.0 / (keys[i].maximum - keys[i].minimum);
 				} else {
-					keys[j].scale = 0.0;
+					keys[i].scale = 0.0;
 				}
 			}
 			
-			keys[j].continuous = (float)( keys[j].raw - keys[j].minimum ) * keys[j].scale;
-			keys[j].continuous = CLAMP(keys[j].continuous, 0.0, 1.0);
+			keys[i].continuous = (float)( keys[i].raw - keys[i].minimum ) * keys[i].scale;
+			keys[i].continuous = CLAMP(keys[i].continuous, 0.0, 1.0);
 			
-			if(keys[j].continuous < keys[j].threshDown) {
-				keys[j].binary = 0;
-			} else if(keys[j].continuous > keys[j].threshUp) {
-				if(now - keys[j].lastTriggerTime > debounceTimeOut) {
-					keys[j].binary = 1;
-					keys[j].lastTriggerTime = now;
+			if(keys[i].continuous < keys[i].threshDown) {
+				keys[i].binary = false;
+			} else if(keys[i].continuous > keys[i].threshUp) {
+				if(now - keys[i].lastTriggerTime > debounceTimeOut) {
+					keys[i].binary = true;
+					keys[i].lastTriggerTime = now;
 				}
 			}
 			
 #ifdef FILTER_CHANGE
-			if(keys[j].raw != keys[j].rawOld) {
-				keys[j].changed = 1;
+			if(keys[i].raw != keys[i].rawOld) {
+				keys[i].changed = true;
 				
-				if(keys[j].binary != keys[j].binaryOld) {
-					keys[j].binaryOld = keys[j].binary;
-					keys[j].binaryChanged = 1;
-					// printf("left hand activated: key binary changed: keys[%d].binary is %d\n", j, keys[j].binary);
+				if(keys[i].binary != keys[i].binaryOld) {
+					keys[i].binaryChanged = true;
+					keys[i].binaryOld = keys[i].binary;
 				} else {
-					keys[j].binaryChanged = 0;
-					// printf("left hand activated: below lower thresh\n");
-					
+					keys[i].binaryChanged = false;
 				}
-				keys[j].rawOld = keys[j].raw;
+				keys[i].rawOld = keys[i].raw;
 			} else {
-				keys[j].changed = 0;
+				keys[i].changed = false;
 			}
 #endif
 		}
@@ -373,15 +378,19 @@ void threadedSerial::parseLeft()
 		
 		for(int i = 0; i < 3; i++) {
 			if(button[i] != buttonOld[i]) {
-				buttonChanged[i] = 1;
+				buttonChanged[i] = true;
 				buttonOld[i] = button[i];
 			} else {
-				buttonChanged[i] = 0;
+				buttonChanged[i] = false;
 			}
 		}
         
         timestampLeft = input[0][17] + (input[0][18] << 8);
         linkQualityLeft = input[0][19];
+        
+        systimeL = ofGetElapsedTimeMillis();
+        deltaTimeL = systimeL - oldSystimeL;
+        oldSystimeL = systimeL;
 
 	} // end haveInput check
 }
@@ -389,7 +398,7 @@ void threadedSerial::parseLeft()
 void threadedSerial::parseRight()
 {
 	int temp;
-	int i, j;
+	int i;
 	
 	if(haveInput[1]) {
         
@@ -422,71 +431,73 @@ void threadedSerial::parseRight()
 		keys[22].raw += ((input[1][14] & 0x30) << 4);
 		keys[23].raw += ((input[1][14] & 0xC) << 6);
         keys[24].raw += ((input[1][14] & 0x3) << 8);
-         
-//        printf("raw keys right: ");
-//        for (int i = 0; i < 12; i++) { // 12 keys
-//            printf("%03x ", keys[i+13].raw);
-//        }
-//        printf("\n");
-		
+        
         int now = ofGetElapsedTimeMillis();
-		
-		for (int i = 0; i < 12; i++) { // 12 keys
-			j = i+13; // the keys 13 to 25
+		for (int i = 13; i < 25; i++) { // 12 keys
 						
-			if(keys[j].inverted) {
-				keys[j].raw = 1023 - keys[j].raw;
+			if(keys[i].inverted) {
+				keys[i].raw = 1023 - keys[i].raw;
 			}
 			
-			if(calibrate[j]) {
-				if(keys[j].raw < keys[j].minimum){
-					keys[j].minimum = keys[j].raw;
+			if(calibrate[i]) {
+				if(keys[i].raw < keys[i].minimum){
+					keys[i].minimum = keys[i].raw;
 				}
-				if(keys[j].raw > keys[j].maximum){
-					keys[j].maximum = keys[j].raw;
+				if(keys[i].raw > keys[i].maximum){
+					keys[i].maximum = keys[i].raw;
 				}
-				if(keys[j].maximum != keys[j].minimum) {
-					keys[j].scale = 1.0 / (keys[j].maximum - keys[j].minimum);
+				if(keys[i].maximum != keys[i].minimum) {
+					keys[i].scale = 1.0 / (keys[i].maximum - keys[i].minimum);
 				} else {
-					keys[j].scale = 0.0;
+					keys[i].scale = 0.0;
 				}
 			}
 			
-			keys[j].continuous = (float)( keys[j].raw - keys[j].minimum ) * keys[j].scale;
-			keys[j].continuous = CLAMP(keys[j].continuous, 0.0, 1.0);
+			keys[i].continuous = (float)( keys[i].raw - keys[i].minimum ) * keys[i].scale;
+			keys[i].continuous = CLAMP(keys[i].continuous, 0.0, 1.0);
 			
-			if(keys[j].continuous < keys[j].threshDown) {
-				keys[j].binary = 0;
-			} else if(keys[j].continuous > keys[j].threshUp){
-				if(now - keys[j].lastTriggerTime > debounceTimeOut) {
-					keys[j].binary = 1;
-					keys[j].lastTriggerTime = now;
+			if(keys[i].continuous < keys[i].threshDown) {
+				keys[i].binary = false;
+			} else if(keys[i].continuous > keys[i].threshUp){
+				if(now - keys[i].lastTriggerTime > debounceTimeOut){
+					keys[i].binary = true;
+					keys[i].lastTriggerTime = now;
 				}
 			}
 			
 #ifdef FILTER_CHANGE
-			if(keys[j].raw != keys[j].rawOld) {
-				keys[j].changed = 1;
-				
-				if(keys[j].binary != keys[j].binaryOld) {
-					keys[j].binaryOld = keys[j].binary;
-					keys[j].binaryChanged = 1;
-					// printf("right hand activated: key binary changed: keys[%d].binary is %d\n", j, keys[j].binary);
-					
+			if(keys[i].raw != keys[i].rawOld) {
+				keys[i].changed = true;
+				if(keys[i].binary != keys[i].binaryOld) {
+					keys[i].binaryChanged = true;
+                    keys[i].binaryOld = keys[i].binary;					
 				} else {
-					keys[j].binaryChanged = 0;
+					keys[i].binaryChanged = false;
 				}
-				keys[j].rawOld = keys[j].raw;
+				keys[i].rawOld = keys[i].raw;
 			} else {
-				keys[j].changed = 0;
+				keys[i].changed = false;
 			}
 #endif
 		}
-        // IMU parsing in separate function() using same input buffer
+        // IMU parsing is done in separate function() using same input buffer
+        
+//        // v3.5 comm structure
+//
+//        batteryLevelRight = input[1][35] & 0xF;
+//        timestampRight = input[1][36] + (input[1][37] << 8);
+//        linkQualityRight  = input[1][38];
+
+        // v3.5 comm structure
+        
         batteryLevelRight = input[1][33] & 0xF;
         timestampRight = input[1][34] + (input[1][35] << 8);
         linkQualityRight  = input[1][36];
-
+     
+        systimeR = ofGetElapsedTimeMillis();
+        deltaTimeR = systimeR - oldSystimeR;
+        oldSystimeR = systimeR;
+    
 	}
 }
 
@@ -495,11 +506,19 @@ void threadedSerial::parseIMU()
 	int i;
 	if(haveInput[1]) {
 		
-		
+        
+        
+//		  // v3.5 comm structure
+//		raw[0] = input[1][29] + (input[1][32] << 8); // accelerometer
+//		raw[1] = input[1][30] + (input[1][33] << 8);
+//		raw[2] = input[1][31] + (input[1][34] << 8);
+
+        // v3.4 comm structure
 		raw[0] = input[1][29] + ((input[1][32] & 0xE0) << 3); // accelerometer
 		raw[1] = input[1][30] + ((input[1][32] & 0x1C) << 6);
 		raw[2] = input[1][31] + ((input[1][33] & 0xE0) << 3);
-		
+        
+
 		raw[3] = input[1][16] + (input[1][20] << 8); // gyroscope
 		raw[4] = input[1][17] + (input[1][21] << 8);
 		raw[5] = input[1][18] + (input[1][22] << 8);
@@ -548,7 +567,6 @@ void threadedSerial::parseIMU()
 		// 280 LSB / degree
 		// offset 13200 is 35 degree
 		rawIMU[i] = raw[i] + 13200;
-		
 		IMU[i] = (rawIMU[i] / 280.) + 35.0;
 		
 		// calc the sums		
@@ -566,8 +584,8 @@ void threadedSerial::parseAir()
 		airLong[0] = input[2][0] + (input[2][1] << 8) + (input[2][2] << 16) + (input[2][3] << 24) ; // pressure
 		airLong[1] = input[2][4] + (input[2][5] << 8) + (input[2][6] << 16) + (input[2][7] << 24) ; // temperature
 		
-		air[0] = ((double)(airLong[0] / 100.0));    // + 1.0) * 0.5;
-		air[1] = ((double)(airLong[1] / 100.0));	// + 1.0) * 0.5; 
+		air[0] = ((double)(airLong[0] / 100.0));    // + 1.0) * 0.5; // pressure
+		air[1] = ((double)(airLong[1] / 100.0));	// + 1.0) * 0.5; // temprature
         
         batteryLevelAir = input[2][8] & 0xF;
         timestampAir = input[2][9] + (input[2][10] << 8);
@@ -576,7 +594,7 @@ void threadedSerial::parseAir()
         //collect atmospheric pressure value index 50-300 at each startup to have atmo-pressure offset 
         if(airValue.calibrationFlag) {
             if(airValue.calibrationCounter == 0) {
-                printf("start calibrating atmospheric pressure after %lld ms\n", ofGetElapsedTimeMillis());
+                ofLog(OF_LOG_VERBOSE, "start calibrating atmospheric pressure after %lld ms\n", ofGetElapsedTimeMillis());
             }
             if(airValue.calibrationCounter < 5) {
                 airValue.offset = air[0];
@@ -588,13 +606,12 @@ void threadedSerial::parseAir()
                 if(airValue.calibrationCounter >= 25){
                     airValue.offset = airValue.calibrationValue / (airValue.calibrationCounter - 5);
                     airValue.calibrationFlag = false; // lock up after you
-                    printf("airValue.offset after calibration is %f\n", airValue.offset);
-                    printf("finished calibrating atmospheric pressure after %lld ms\n", ofGetElapsedTimeMillis());
+                    ofLog(OF_LOG_VERBOSE, "airValue.offset after calibration is %f\n", airValue.offset);
+                    ofLog(OF_LOG_VERBOSE, "finished calibrating atmospheric pressure after %lld ms\n", ofGetElapsedTimeMillis());
                 }
             }
             airValue.calibrationCounter++;
         }
-        
         
         airValue.relative = air[0] - airValue.offset;
         
@@ -637,20 +654,22 @@ void threadedSerial::calcKeycode()
 	
 	if (keycode != keycodeOld) {
 		keycodeOld = keycode;
-		keycodeChanged = 1;
+		keycodeChanged = true;
+        
+        validMidiNote = false;
+        midinote = -1;
+        for(i = 0; i < 128; i++) {
+            if(keycode == midiNote[i].keycode) {
+                midinote = midiNote[i].note;
+                validMidiNote = true;
+                break;
+            }
+        }
+
 	}else{
-		keycodeChanged = 0;
+		keycodeChanged = false;
 	}
-	validMidiNote = false;
-	midinote = -1;
-	for(i = 0; i < 128; i++) {
-		if(keycode == midiNote[i].keycode) {
-			midinote = midiNote[i].note;
-			validMidiNote = true;
-			break;
-		}
-	}
-	//		}
+		//		}
 }
 
 void threadedSerial::calcHeadingTilt()
@@ -686,28 +705,39 @@ void threadedSerial::sendOSC()
 {
     
     // timestamps & keys
-    if(haveInput[0] || haveInput[1]) { // both hands triggers sending
+//    if(haveInput[0] || haveInput[1]) { // both hands triggers sending
     
         // Keys
-        m[61].clear();
-        m[61].setAddress( timestampAddressRight ); // timestamp Right
-        m[61].addIntArg( timestampRight );
-        sender.sendMessage( m[61] );
-        
         m[61].clear();
         m[61].setAddress( timestampAddressLeft ); // timestamp Left
         m[61].addIntArg( timestampLeft );
         sender.sendMessage( m[61] );
-        
-        systime = ofGetElapsedTimeMillis();
-        systemTimestamp = systime - oldSystime;
-        oldSystime = systime;
-        
+    
         m[62].clear();
-        m[62].setAddress( timestampAddressServer ); // timestamp
-        m[62].addIntArg( systemTimestamp );
+        m[62].setAddress( timestampAddressRight ); // timestamp Right
+        m[62].addIntArg( timestampRight );
         sender.sendMessage( m[62] );
+    
+        systemTimestamp = ofGetElapsedTimeMillis();
+
+        m[63].clear();
+        m[63].setAddress( timestampAddressServer ); // timestamp
+        m[63].addIntArg( deltaTimeL );
+        m[63].addIntArg( deltaTimeR );
+        m[63].addIntArg( systemTimestamp );
+        sender.sendMessage( m[63] );
         
+
+        if(sendRawValues) {
+            for(int i = 0; i < 25; i++) { // raw key values
+                if(keys[i].changed) {
+                    m[i+16].clear();
+                    m[i+16].setAddress( keys[i].oscaddress+"/raw");
+                    m[i+16].addIntArg( keys[i].raw );
+                    sender.sendMessage( m[i+16] );
+                }
+            }
+        }
         
         for(int i = 0; i < 25; i++) { // continuous key values
             if(keys[i].changed) {
@@ -715,6 +745,7 @@ void threadedSerial::sendOSC()
                 m[i+16].setAddress( keys[i].oscaddress+"/continuous");
                 m[i+16].addFloatArg( keys[i].continuous );
                 sender.sendMessage( m[i+16] );
+                keys[i].changed = false;
             }
         }
         for(int i = 0; i < 25; i++) { // binary key values
@@ -723,16 +754,10 @@ void threadedSerial::sendOSC()
                 m[i+16].setAddress( keys[i].oscaddress+"/down");
                 m[i+16].addIntArg( keys[i].binary );
                 sender.sendMessage( m[i+16] );
+                keys[i].binaryChanged = false;
             }
         }
-        for(int i = 0; i < 25; i++) { // raw key values
-            if(keys[i].changed) {
-                m[i+16].clear();
-                m[i+16].setAddress( keys[i].oscaddress+"/raw");
-                m[i+16].addIntArg( keys[i].raw );
-                sender.sendMessage( m[i+16] );
-            }
-        }
+
         if(keycodeChanged) { // keycode
             m[42].clear();
             m[42].setAddress( keycodeaddress );
@@ -740,20 +765,22 @@ void threadedSerial::sendOSC()
             sender.sendMessage( m[42] );
             keycodeChanged = false;
             // printf("sending keycode %d\n", keycode);
+            
+            if(validMidiNote) {
+                m[43].clear();	// midinote derived from keycode
+                m[43].setAddress( midinoteaddress );
+                m[43].addIntArg( midinote );
+                sender.sendMessage( m[43] );
+            }
         }
-        if(validMidiNote) {
-            m[43].clear();	// midinote derived from keycode
-            m[43].setAddress( midinoteaddress );
-            m[43].addIntArg( midinote );
-            sender.sendMessage( m[43] );
-            validMidiNote = false;
-        }
+
         for(int i = 0; i < 3; i++) { // buttons
             if(buttonChanged[i]) {
                 m[i+44].clear();
                 m[i+44].setAddress( buttonaddresses[2-i] );
                 m[i+44].addIntArg( button[i] );
                 sender.sendMessage( m[i+44] );
+                buttonChanged[i] = false;
             }
         }
         
@@ -779,26 +806,28 @@ void threadedSerial::sendOSC()
         m[2].addFloatArg( IMU[8] );
         sender.sendMessage( m[2] );
         
-        m[3].clear();
-        m[3].setAddress( imuaddresses[3] ); // IMU accelero raw
-        m[3].addFloatArg( rawIMU[0] );
-        m[3].addFloatArg( rawIMU[1] );
-        m[3].addFloatArg( rawIMU[2] );
-        sender.sendMessage( m[3] );
-        
-        m[4].clear();
-        m[4].setAddress( imuaddresses[4] ); // IMU gyro raw
-        m[4].addFloatArg( rawIMU[3] );
-        m[4].addFloatArg( rawIMU[4] );
-        m[4].addFloatArg( rawIMU[5] );
-        sender.sendMessage( m[4] );
-        
-        m[5].clear();
-        m[5].setAddress( imuaddresses[5] ); // IMU magneto raw
-        m[5].addFloatArg( rawIMU[6] );
-        m[5].addFloatArg( rawIMU[7] );
-        m[5].addFloatArg( rawIMU[8] );
-        sender.sendMessage( m[5] );
+        if(sendRawValues) {
+            m[3].clear();
+            m[3].setAddress( imuaddresses[3] ); // IMU accelero raw
+            m[3].addFloatArg( rawIMU[0] );
+            m[3].addFloatArg( rawIMU[1] );
+            m[3].addFloatArg( rawIMU[2] );
+            sender.sendMessage( m[3] );
+            
+            m[4].clear();
+            m[4].setAddress( imuaddresses[4] ); // IMU gyro raw
+            m[4].addFloatArg( rawIMU[3] );
+            m[4].addFloatArg( rawIMU[4] );
+            m[4].addFloatArg( rawIMU[5] );
+            sender.sendMessage( m[4] );
+            
+            m[5].clear();
+            m[5].setAddress( imuaddresses[5] ); // IMU magneto raw
+            m[5].addFloatArg( rawIMU[6] );
+            m[5].addFloatArg( rawIMU[7] );
+            m[5].addFloatArg( rawIMU[8] );
+            sender.sendMessage( m[5] );
+        }
         
         m[6].clear();
         m[6].setAddress( imuaddresses[6] ); // IMU accelero summed
@@ -846,275 +875,278 @@ void threadedSerial::sendOSC()
         sender.sendMessage( m[14] );
         
         // reset flags
-        if(haveInput[0]) haveInput[0] = false;
-        if(haveInput[1]) haveInput[1] = false;
+        if(haveInput[0]) {
+            haveInput[0] = false;
+        }
+        if(haveInput[1]) {
+            haveInput[1] = false;    
+        }
+//    }
+//    if(haveInput[2]) { // AirMems packet
     
-    }
-    if(haveInput[2]) { // AirMems packet
-    
-        m[63].clear();
-        m[63].setAddress( timestampAddressAir ); // timestamp
-        m[63].addIntArg( timestampAir );
-        sender.sendMessage( m[63] );
-        
         m[48].clear();
-        m[48].setAddress( airaddresses[0] ); // air pressure
-        m[48].addFloatArg( airValue.continuous);
+        m[48].setAddress( timestampAddressAir ); // timestamp
+        m[48].addIntArg( timestampAir );
         sender.sendMessage( m[48] );
         
         m[49].clear();
-        m[49].setAddress( airaddresses[1] ); // air temperature
-        m[49].addFloatArg( air[1]);
+        m[49].setAddress( airaddresses[0] ); // air pressure
+        m[49].addFloatArg( airValue.continuous);
         sender.sendMessage( m[49] );
         
         m[50].clear();
-        m[50].setAddress( batteryAddressAir ); // air battery
-        m[50].addIntArg( batteryLevelAir);
+        m[50].setAddress( airaddresses[1] ); // air temperature
+        m[50].addFloatArg( air[1]);
         sender.sendMessage( m[50] );
         
         m[51].clear();
-        m[51].setAddress( linkQualityAddressAir ); // air link quality
-        m[51].addIntArg( linkQualityAir);
+        m[51].setAddress( batteryAddressAir ); // air battery
+        m[51].addIntArg( batteryLevelAir);
         sender.sendMessage( m[51] );
         
+        m[52].clear();
+        m[52].setAddress( linkQualityAddressAir ); // air link quality
+        m[52].addIntArg( linkQualityAir);
+        sender.sendMessage( m[52] );
+        
         // reset flag
-        haveInput[2] = false;
-    }
+//        haveInput[2] = false;
+//    }
 }
 
 void threadedSerial::draw()
 {
-	int i;
-	int anchorx = 12;
-	int anchory = 66;
-	int leftColumn = 110;
-	int midColumn = 150;
-	int rightColumn = 220;
-	int farRightColumn = 330;
-    
-    int imuColumnLeft = 410;
+//	int i;
+//	int anchorx = 12;
+//	int anchory = 66;
+//	int leftColumn = 110;
+//	int midColumn = 150;
+//	int rightColumn = 220;
+//	int farRightColumn = 330;
+//    
+//    int imuColumnLeft = 410;
+//	
+//	int stepsize = 18;
+//	int columnwidth = 180;
+//	int width = 430;
+//	int height = 635;
+//	double yy;
 	
-	int stepsize = 18;
-	int columnwidth = 180;
-	int width = 430;
-	int height = 635;
-	double yy;
-	
-	if( lock() )
-	{
-		if (status == 1 && drawValues)
-		{
+//	if( lock() )
+//	{
+//		if (status == 1 && drawValues)
+//		{
+////			ofFill();
+////			ofSetColor(200, 200, 200, 255);
+////			ofRect(leftColumn-1, 79, width-leftColumn-5, height-anchory-15);
+//            ofSetColor(0, 127, 255, 255);
+//
+//			for(i = 0; i < 25; i++) { // stripes
+//				if((i % 2) == 0){
+//					ofFill();
+//					ofSetColor(255, 255, 255, 255);
+//					ofRect(leftColumn-1, anchory+((i-1) * stepsize)+7, width-leftColumn-85, 16);
+//					ofSetColor(0, 0, 0, 255);
+//				}			
+//			}
+//            
+//            for(i = 0; i < 12; i++) { // stripes
+//				if((i % 3) == 0){
+//					ofFill();
+//					ofSetColor(255, 255, 255, 255);
+//					ofRect(leftColumn-1 + imuColumnLeft, anchory+((i-1) * stepsize)+7, width-leftColumn-103, 16);
+//					ofSetColor(0, 0, 0, 255);
+//				}
+//			}
+//            
+////            printf("\ndraw raw ");
+//			for(i = 0; i < 25; i++) { // keys
+//				ofSetColor(0, 0, 0, 255);
+//				yy = anchory+(i * stepsize);
+//				TTF.drawString(ofToString(keys[i].raw, 6), leftColumn, yy );
+////                printf("%lx ", keys[i].raw);
+//				TTF.drawString(ofToString(keys[i].continuous, 6), midColumn, yy);
+//				ofNoFill();
+//				ofSetColor(91, 91, 91, 255);
+//				ofRect(rightColumn, yy-9, 104, 12);
+//				ofFill();
+//				ofSetColor(0, 0, 0, 127);
+//				if(calibrate[i]) {
+//					ofSetColor(255, 127, 0, 191);					
+//					ofRect( rightColumn + (104 * keys[i].minimum*scale10), yy-7, (104 * (keys[i].maximum - keys[i].minimum) * scale10), 9);
+//					ofSetColor(0, 0, 0, 255);
+//					ofRect( rightColumn + (104 * (keys[i].raw*scale10)), yy-9, 2, 12);
+//					
+//				} else {
+//					ofRect( rightColumn + (104 * keys[i].continuous), yy-9, 2, 12);
+//					ofSetColor(91, 91, 91, 255);
+//					ofLine(rightColumn + (104 * keys[i].threshDown), yy-9, rightColumn + (104 * keys[i].threshDown), yy+4);
+//					ofLine(rightColumn + (104 * keys[i].threshUp), yy-9, rightColumn + (104 * keys[i].threshUp), yy+4);
+//				}
+//				// draw binary boxes
+//				ofNoFill();
+//				ofSetColor(91, 91, 91, 255);
+//				ofRect(farRightColumn, yy-9, 12, 12);
+//				
+//				if(keys[i].binary) {
+//					ofFill();
+//					ofSetColor(0, 0, 0, 255);
+//					ofRect(farRightColumn+2, yy-6, 7, 7);
+//				}
+//                // individual toggles
+//                if(calibrateSwitch) {
+//                    if(calibrateSingle) {
+//                        
+//                        if(calibrate[i]){
+//                            ofFill();
+//                            ofSetColor(255,127,0, 191);
+//                            ofRect(rightColumn +126, yy-9, 16, 12);
+//                        }
+//                        ofNoFill();
+//                        ofSetColor(0,0,0);
+//                        ofRect(rightColumn +126, yy-9, 16, 12);
+//                        TTF.drawString("c", rightColumn+130, yy+1);
+//                    }
+//                }
+//			}
+//            
+//            
+//            
+//			for(i = 0; i < 9; i++) { // imu
+//				ofSetColor(0, 0, 0, 255);
+////				yy = anchory+((i+25) * stepsize);
+//				yy = anchory+((i) * stepsize);
+//				TTF.drawString( ofToString(raw[i], 6) , leftColumn + imuColumnLeft, yy );
+//				TTF.drawString(ofToString(IMU[i], 6), midColumn  + 10 + imuColumnLeft, yy);
+//				ofNoFill();
+//				ofSetColor(91, 91,91, 255);
+//				ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
+//				ofFill();
+//				ofSetColor(0, 0, 0, 255);
+//				ofRect( rightColumn + imuColumnLeft + (104 * IMU[i]), yy-9, 2, 12);
+//				ofNoFill();
+//				ofSetColor(91, 91, 91, 255);
+//				ofLine(rightColumn+52 + imuColumnLeft, yy-9, rightColumn+52 + imuColumnLeft, yy+4);
+//			}	
+//			// air 
+//			ofSetColor(0, 0, 0, 255);
+////			yy = anchory+(34 * stepsize);
+//			yy = anchory+(12 * stepsize);
+//			TTF.drawString(ofToString(air[0], 2), leftColumn + imuColumnLeft, yy );
+//			TTF.drawString(ofToString(airValue.continuous, 2), midColumn  + 10 + imuColumnLeft, yy);
+//			
+//			ofNoFill();
+//			ofSetColor(91, 91, 91, 255);
+//			ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
 //			ofFill();
-//			ofSetColor(200, 200, 200, 255);
-//			ofRect(leftColumn-1, 79, width-leftColumn-5, height-anchory-15);
-            ofSetColor(0, 127, 255, 255);
-
-			for(i = 0; i < 25; i++) { // stripes
-				if((i % 2) == 0){
-					ofFill();
-					ofSetColor(255, 255, 255, 255);
-					ofRect(leftColumn-1, anchory+((i-1) * stepsize)+7, width-leftColumn-85, 16);
-					ofSetColor(0, 0, 0, 255);
-				}			
-			}
-            
-            for(i = 0; i < 12; i++) { // stripes
-				if((i % 3) == 0){
-					ofFill();
-					ofSetColor(255, 255, 255, 255);
-					ofRect(leftColumn-1 + imuColumnLeft, anchory+((i-1) * stepsize)+7, width-leftColumn-103, 16);
-					ofSetColor(0, 0, 0, 255);
-				}
-			}
-            
-//            printf("\ndraw raw ");
-			for(i = 0; i < 25; i++) { // keys
-				ofSetColor(0, 0, 0, 255);
-				yy = anchory+(i * stepsize);
-				TTF.drawString(ofToString(keys[i].raw, 6), leftColumn, yy );
-//                printf("%lx ", keys[i].raw);
-				TTF.drawString(ofToString(keys[i].continuous, 6), midColumn, yy);
-				ofNoFill();
-				ofSetColor(91, 91, 91, 255);
-				ofRect(rightColumn, yy-9, 104, 12);
-				ofFill();
-				ofSetColor(0, 0, 0, 127);
-				if(calibrate[i]) {
-					ofSetColor(255, 127, 0, 191);					
-					ofRect( rightColumn + (104 * keys[i].minimum*scale10), yy-7, (104 * (keys[i].maximum - keys[i].minimum) * scale10), 9);
-					ofSetColor(0, 0, 0, 255);
-					ofRect( rightColumn + (104 * (keys[i].raw*scale10)), yy-9, 2, 12);
-					
-				} else {
-					ofRect( rightColumn + (104 * keys[i].continuous), yy-9, 2, 12);
-					ofSetColor(91, 91, 91, 255);
-					ofLine(rightColumn + (104 * keys[i].threshDown), yy-9, rightColumn + (104 * keys[i].threshDown), yy+4);
-					ofLine(rightColumn + (104 * keys[i].threshUp), yy-9, rightColumn + (104 * keys[i].threshUp), yy+4);
-				}
-				// draw binary boxes
-				ofNoFill();
-				ofSetColor(91, 91, 91, 255);
-				ofRect(farRightColumn, yy-9, 12, 12);
-				
-				if(keys[i].binary) {
-					ofFill();
-					ofSetColor(0, 0, 0, 255);
-					ofRect(farRightColumn+2, yy-6, 7, 7);
-				}
-                // individual toggles
-                if(calibrateSwitch) {
-                    if(calibrateSingle) {
-                        
-                        if(calibrate[i]){
-                            ofFill();
-                            ofSetColor(255,127,0, 191);
-                            ofRect(rightColumn +126, yy-9, 16, 12);
-                        }
-                        ofNoFill();
-                        ofSetColor(0,0,0);
-                        ofRect(rightColumn +126, yy-9, 16, 12);
-                        TTF.drawString("c", rightColumn+130, yy+1);
-                    }
-                }
-			}
-            
-            
-            
-			for(i = 0; i < 9; i++) { // imu
-				ofSetColor(0, 0, 0, 255);
-//				yy = anchory+((i+25) * stepsize);
-				yy = anchory+((i) * stepsize);
-				TTF.drawString( ofToString(raw[i], 6) , leftColumn + imuColumnLeft, yy );
-				TTF.drawString(ofToString(IMU[i], 6), midColumn  + 10 + imuColumnLeft, yy);
-				ofNoFill();
-				ofSetColor(91, 91,91, 255);
-				ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
-				ofFill();
-				ofSetColor(0, 0, 0, 255);
-				ofRect( rightColumn + imuColumnLeft + (104 * IMU[i]), yy-9, 2, 12);
-				ofNoFill();
-				ofSetColor(91, 91, 91, 255);
-				ofLine(rightColumn+52 + imuColumnLeft, yy-9, rightColumn+52 + imuColumnLeft, yy+4);
-			}	
-			// air 
-			ofSetColor(0, 0, 0, 255);
-//			yy = anchory+(34 * stepsize);
-			yy = anchory+(10 * stepsize);
-			TTF.drawString(ofToString(air[0], 2), leftColumn + imuColumnLeft, yy );
-			TTF.drawString(ofToString(airValue.continuous, 2), midColumn  + 10 + imuColumnLeft, yy);
-			
-			ofNoFill();
-			ofSetColor(91, 91, 91, 255);
-			ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
-			ofFill();
-			ofSetColor(0, 0, 0, 127);
-			ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((airLong[0] - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
-            
-            if(airValue.calibratePressureRange) {
-                ofSetColor(255, 224, 0, 191);
-                ofRect( rightColumn + imuColumnLeft, yy-7, (103), 9);
-                // TODO figure scaling for the rangebars
-                ofSetColor(0, 0, 0, 255);
-                ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((airValue.continuous - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
-            } else {
-                if(airValue.calibrationFlag){
-                    ofFill();
-                    ofSetColor(255, 0, 0, 255);
-                    ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
-                }else{
-                    ofNoFill();
-                    ofSetColor(91, 91, 91, 255);
-                    ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
-                }
-                ofFill();
-                ofSetColor(0, 0, 0, 127);
-                ofRect( rightColumn + imuColumnLeft + CLAMP((104 * airValue.continuous), 0, 104), yy-9, 2, 12);
-            }
-            
-            
-            
-			
-			// buttons
-			ofSetColor(0, 0, 0, 255);
-//			yy = anchory+((35) * stepsize);
-			yy = anchory+((9) * stepsize);
-			TTF.drawString( ofToString(button[2], 1), leftColumn + imuColumnLeft, yy );
-			TTF.drawString( ofToString(button[1], 1), leftColumn+12 + imuColumnLeft, yy );
-			TTF.drawString( ofToString(button[0], 1), leftColumn+24 + imuColumnLeft, yy );
-            
-			ofNoFill();
-			ofSetColor(91, 91, 91, 255);
-			ofRect(midColumn + 10 + imuColumnLeft, yy-9, 12, 12);
-			ofRect(midColumn + 10 + 14 + imuColumnLeft, yy-9, 12, 12);
-			ofRect(midColumn + 10 + 28 + imuColumnLeft, yy-9, 12, 12);
-			
-			ofFill();
-			ofSetColor(0, 0, 0, 255);
-			if(button[2]) {
-				ofRect(midColumn + 12 + imuColumnLeft, yy-6, 7, 7);
-			}				
-			if(button[1]) {
-				ofRect(midColumn + 12 + 14 + imuColumnLeft, yy-6, 7, 7);
-			}
-			if(button[0]) {
-				ofRect(midColumn + 12 + 28 + imuColumnLeft, yy-6, 7, 7);
-			}
-            
-			// battery
-//            ofSetColor(0, 0, 0, 255);
-////			yy = anchory+((36) * stepsize);
-//            yy = 40;
-//			TTF.drawString( "main: "+ofToString((int)(batteryLevelRight*12.5))+"%", anchorx+82 + 360, yy );
-//			TTF.drawString( "mouthpiece: "+ofToString((int)(batteryLevelAir*12.5))+"%", leftColumn+12 + 360, yy );
-            
-			if(calibrateSwitch) {
-				ofFill();
-				ofSetColor(255, 127, 0);
-				ofRect(375, 480, 124, 20);
-				ofNoFill();
-				ofSetColor(127, 127, 127);
-				ofRect(375, 480, 124, 20);
-				ofSetColor(0, 0, 0);
-				TTF.drawString("Calibrating Keys", 375+12, 480+14);
-
-                if(calibrateSingle == 0) {
-                    ofFill();
-                    ofSetColor(255, 127, 0);
-                    ofRect(375, 458, 124, 20);
-                    ofNoFill();
-                    ofSetColor(127, 127, 127);
-                    ofRect(375, 458, 124, 20);
-                    ofSetColor(0, 0, 0);
-                    TTF.drawString("Calibrate All...", 375+24, 458+14);
-                }else{
-                    ofNoFill();
-                    ofSetColor(127, 127, 127);
-                    ofRect(375, 458, 124, 20);
-                    ofSetColor(0, 0, 0);
-                    TTF.drawString("Calibrate All Keys", 375+10, 458+14);
-                }
-
-				ofNoFill();
-				ofSetColor(127, 127, 127);
-				ofRect(375, 436, 124, 20);
-				ofSetColor(0, 0, 0);
-				TTF.drawString("Reset Key Calibr.", 375+12, 436+14);
-			}
-            
-            if(airValue.calibratePressureRange) {
-				ofFill();
-				ofSetColor(255, 224, 0);
-				ofRect(502, 480, 124, 20);
-				ofNoFill();
-				ofSetColor(127, 127, 127);
-				ofRect(502, 480, 124, 20);
-				ofSetColor(0, 0, 0);
-				TTF.drawString("Calibrating Air", 502+12, 480+14);
-			}
-		}
-		unlock();
-	}else{
-		//			str = "can't lock!\neither an error\nor the thread has stopped";
-        ofLog(OF_LOG_ERROR, "SabreServer: couldn't start serial Thread !! can't lock!\neither an error\nor the thread has stopped");
-	}
+//			ofSetColor(0, 0, 0, 127);
+//			ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((airLong[0] - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
+//            
+//            if(airValue.calibratePressureRange) {
+//                ofSetColor(255, 224, 0, 191);
+//                ofRect( rightColumn + imuColumnLeft, yy-7, (103), 9);
+//                // TODO figure scaling for the rangebars
+//                ofSetColor(0, 0, 0, 255);
+//                ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((airValue.continuous - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
+//            } else {
+//                if(airValue.calibrationFlag){
+//                    ofFill();
+//                    ofSetColor(255, 0, 0, 255);
+//                    ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
+//                }else{
+//                    ofNoFill();
+//                    ofSetColor(91, 91, 91, 255);
+//                    ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
+//                }
+//                ofFill();
+//                ofSetColor(0, 0, 0, 127);
+//                ofRect( rightColumn + imuColumnLeft + CLAMP((104 * airValue.continuous), 0, 104), yy-9, 2, 12);
+//            }
+//            
+//            
+//            
+//			
+//			// buttons
+//			ofSetColor(0, 0, 0, 255);
+////			yy = anchory+((35) * stepsize);
+//			yy = anchory+((11) * stepsize);
+//			TTF.drawString( ofToString(button[2], 1), leftColumn + imuColumnLeft, yy );
+//			TTF.drawString( ofToString(button[1], 1), leftColumn+12 + imuColumnLeft, yy );
+//			TTF.drawString( ofToString(button[0], 1), leftColumn+24 + imuColumnLeft, yy );
+//            
+//			ofNoFill();
+//			ofSetColor(91, 91, 91, 255);
+//			ofRect(midColumn + 10 + imuColumnLeft, yy-9, 12, 12);
+//			ofRect(midColumn + 10 + 14 + imuColumnLeft, yy-9, 12, 12);
+//			ofRect(midColumn + 10 + 28 + imuColumnLeft, yy-9, 12, 12);
+//			
+//			ofFill();
+//			ofSetColor(0, 0, 0, 255);
+//			if(button[2]) {
+//				ofRect(midColumn + 12 + imuColumnLeft, yy-6, 7, 7);
+//			}				
+//			if(button[1]) {
+//				ofRect(midColumn + 12 + 14 + imuColumnLeft, yy-6, 7, 7);
+//			}
+//			if(button[0]) {
+//				ofRect(midColumn + 12 + 28 + imuColumnLeft, yy-6, 7, 7);
+//			}
+//            
+//			// battery
+////            ofSetColor(0, 0, 0, 255);
+//////			yy = anchory+((36) * stepsize);
+////            yy = 40;
+////			TTF.drawString( "main: "+ofToString((int)(batteryLevelRight*12.5))+"%", anchorx+82 + 360, yy );
+////			TTF.drawString( "mouthpiece: "+ofToString((int)(batteryLevelAir*12.5))+"%", leftColumn+12 + 360, yy );
+//            
+//			if(calibrateSwitch) {
+//				ofFill();
+//				ofSetColor(255, 127, 0);
+//				ofRect(375, 480, 124, 20);
+//				ofNoFill();
+//				ofSetColor(127, 127, 127);
+//				ofRect(375, 480, 124, 20);
+//				ofSetColor(0, 0, 0);
+//				TTF.drawString("Calibrating Keys", 375+12, 480+14);
+//
+//                if(calibrateSingle == 0) {
+//                    ofFill();
+//                    ofSetColor(255, 127, 0);
+//                    ofRect(375, 458, 124, 20);
+//                    ofNoFill();
+//                    ofSetColor(127, 127, 127);
+//                    ofRect(375, 458, 124, 20);
+//                    ofSetColor(0, 0, 0);
+//                    TTF.drawString("Calibrate All...", 375+24, 458+14);
+//                }else{
+//                    ofNoFill();
+//                    ofSetColor(127, 127, 127);
+//                    ofRect(375, 458, 124, 20);
+//                    ofSetColor(0, 0, 0);
+//                    TTF.drawString("Calibrate All Keys", 375+10, 458+14);
+//                }
+//
+//				ofNoFill();
+//				ofSetColor(127, 127, 127);
+//				ofRect(375, 436, 124, 20);
+//				ofSetColor(0, 0, 0);
+//				TTF.drawString("Reset Key Calibr.", 375+12, 436+14);
+//			}
+//            
+//            if(airValue.calibratePressureRange) {
+//				ofFill();
+//				ofSetColor(255, 224, 0);
+//				ofRect(502, 480, 124, 20);
+//				ofNoFill();
+//				ofSetColor(127, 127, 127);
+//				ofRect(502, 480, 124, 20);
+//				ofSetColor(0, 0, 0);
+//				TTF.drawString("Calibrating Air", 502+12, 480+14);
+//			}
+//		}
+//		unlock();
+//	}else{
+//		//			str = "can't lock!\neither an error\nor the thread has stopped";
+//        ofLog(OF_LOG_ERROR, "SabreServer: couldn't start serial Thread !! can't lock!\neither an error\nor the thread has stopped");
+//	}
 }

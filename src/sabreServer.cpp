@@ -85,7 +85,7 @@ void sabreServer::setup()
 	
 	receiver.setup( receiveport );
 	
-	framerate = 20;
+//	framerate = 20;
 	ofSetFrameRate( framerate ); // cap the glut callback rate
 //	ofSetVerticalSync( true );
 //	ofBackground( 224, 224, 224);
@@ -140,7 +140,7 @@ void sabreServer::draw()
 	int height;
 	double yy;
     int pos_x;
-	
+
 	if(windowChanged == 1) {
 		if(drawValues == 0) {
 			width = 550;
@@ -159,13 +159,13 @@ void sabreServer::draw()
 	if(redrawFlag == 1) // drawn once after first update
 	{
 		// header frame background
-//		ofFill();        
-//		ofSetColor(191, 191, 191, 255);
-//        ofRect(0, 0, width, 49);
+		ofFill();        
+		ofSetColor(191, 191, 191, 255);
+        ofRect(0, 0, width, 49);
 
 		
-//		ofSetColor(255, 191, 191, 127);
-//		ofRect(0, 0, width, height);
+		ofSetColor(255, 127, 0, 64);
+		ofRect(0, 0, width, height);
 		
 		if(serialThreadObject->status) {
 			ofSetColor(63, 63, 63, 255);
@@ -257,27 +257,39 @@ void sabreServer::draw()
 		ofSetColor(0, 0, 0);
 		TTFsmall.drawString("Calibrate Air", 500+24, 480+14);
 
-		
 		// value display left column
+		
+        ofFill();
 		for(i = 0; i < 25; i++) { // stripes
 			if((i % 2) == 0){
-				ofFill();
 				ofSetColor(255, 255, 255, 255);
 				ofRect(anchorx-2, anchory+((i-1) * stepsize)+7, 94, 16);
-				ofSetColor(0, 0, 0, 255);
 			}			
 		}
-		
-        for(i = 0; i < 12; i++) { // stripes
+        for(i = 0; i < 9; i++) { // stripes
 			if((i % 3) == 0){
-				ofFill();
 				ofSetColor(255, 255, 255, 255);
-				ofRect(anchorx-2 + 360, anchory+((i-1) * stepsize)+7, 140, 16);
-				ofSetColor(0, 0, 0, 255);
+				ofRect(anchorx-2 + 360, anchory+((i-1) * stepsize)+7, 144, 16);
 			}
 		}
-		
+        ofFill(); // heading
+        ofSetColor(255, 255, 255, 255);
+        ofRect(anchorx-2 + 360, anchory+((8) * stepsize)+7, 144, 16);
+        
+        ofFill(); // button
+        ofSetColor(255, 255, 255, 255);
+        ofRect(anchorx-2 + 360, anchory+((11) * stepsize)+7, 144, 16);
+        
+        ofFill(); // pressure
+        ofSetColor(255, 255, 255, 255);
+        ofRect(anchorx-2 + 360, anchory+((13) * stepsize)+7, 144, 16);
+        
+        ofFill(); // keycode
+        ofSetColor(255, 255, 255, 255);
+        ofRect(anchorx-2 + 360, anchory+((15) * stepsize)+7, 144, 16);
+        
 		ofSetColor(0, 0, 0, 191);
+        
 		for(i = 0; i < 25; i++) { // key addresses
 			TTFsmall.drawString(serialThreadObject->keys[i].oscaddress, anchorx, anchory+((i) * stepsize) );
 		}
@@ -290,22 +302,27 @@ void sabreServer::draw()
 //			TTFsmall.drawString(str, anchorx + 360, anchory+((i+25) * stepsize) );
 //			TTFsmall.drawString(serialThreadObject->imuaddresses[i/3], anchorx, anchory+5+((i+25) * stepsize) );
 		}
-        // air addresses
-		TTFsmall.drawString(serialThreadObject->airaddresses[0], anchorx + 360, anchory+(10 * stepsize) );
+        
+        TTFsmall.drawString(serialThreadObject->imuaddresses[10], anchorx + 360, anchory+((9) * stepsize) );
+        TTFsmall.drawString(serialThreadObject->imuaddresses[11], anchorx + 360, anchory+((10) * stepsize) );
+        
         
 		for(i = 0; i < 1; i++) { // first button address truncated
 			char temp[64];
 			strncpy(temp, serialThreadObject->buttonaddresses[0].c_str(), serialThreadObject->buttonaddresses[0].size()-2);
 			temp[serialThreadObject->buttonaddresses[0].size()-2] = 0;
 //			TTFsmall.drawString(temp, anchorx + 360, anchory+((i+35) * stepsize) );
-			TTFsmall.drawString(temp, anchorx + 360, anchory+((i+9) * stepsize) );
+			TTFsmall.drawString(temp, anchorx + 360, anchory+((i+12) * stepsize) );
 		}
-        // battery
-        //        TTFsmall.drawString("battery level", anchorx, anchory+((i+35) * stepsize) );
-//        TTFsmall.drawString("battery: ", 265, 38);
-//        TTF.drawString( "main: "+ofToString((int)(serialThreadObject->batteryLevelRight*12.5))+"%", 380, 40 );
-//        TTF.drawString( "mouthpiece: "+ofToString((int)(serialThreadObject->batteryLevelAir*12.5))+"%", 440, 40 );
-
+        
+        // air addresses
+		TTFsmall.drawString(serialThreadObject->airaddresses[0], anchorx + 360, anchory+(14 * stepsize) );
+        
+        // air addresses
+		TTFsmall.drawString(serialThreadObject->keycodeaddress, anchorx + 360, anchory+(16 * stepsize) );
+        TTFsmall.drawString(serialThreadObject->midinoteaddress, anchorx + 360, anchory+(17 * stepsize) );
+      
+        
 		texScreen.loadScreenData(0,0, 440, 700);
 		drawTex = 1;
 	} else {
@@ -314,9 +331,287 @@ void sabreServer::draw()
 			drawTex = 0;
 		}
 	}
-//    TTFsmall.drawString( "battery level: main: "+ofToString((int)(serialThreadObject->batteryLevelRight*6.667), 2, 2, 0)+"%" +" mouthpiece: "+ofToString((int)(serialThreadObject->batteryLevelAir*6.667), 2, 2, 0)+"%", 270, 34 );
-//    TTFsmall.drawString( "wireless: left "+ofToString((int)(serialThreadObject->linkQualityLeft*0.390625), 2, 0, 0)+"%" +" right: "+ofToString((int)(serialThreadObject->linkQualityRight*0.390625), 2, 0, 0)+"% "+" mouthpiece: "+ofToString((int)(serialThreadObject->linkQualityAir*0.390625), 2, 0, 0)+"%", 270, 48 );
+#pragma mark draw values    
     
+	anchorx = 12;
+	anchory = 66;
+	leftColumn = 110;
+	int midColumn = 150;
+	rightColumn = 220;
+	int farRightColumn = 330;
+    
+    int imuColumnLeft = 410;
+	
+	stepsize = 18;
+	columnwidth = 180;
+	width = 430;
+	height = 635;
+    
+    if (status == 1 && drawValues)
+    {
+        //			ofFill();
+        //			ofSetColor(200, 200, 200, 255);
+        //			ofRect(leftColumn-1, 79, width-leftColumn-5, height-anchory-15);
+        ofSetColor(0, 127, 255, 255);
+        
+        for(i = 0; i < 25; i++) { // stripes
+            if((i % 2) == 0){
+                ofFill();
+                ofSetColor(255, 255, 255, 255);
+                ofRect(leftColumn-1, anchory+((i-1) * stepsize)+7, width-leftColumn-85, 16);
+                ofSetColor(0, 0, 0, 255);
+            }
+        }
+        
+        for(i = 0; i < 9; i++) { // stripes
+            if((i % 3) == 0){
+                ofFill();
+                ofSetColor(255, 255, 255, 255);
+                ofRect(leftColumn-1 + imuColumnLeft, anchory+((i-1) * stepsize)+7, width-leftColumn-103, 16);
+                ofSetColor(0, 0, 0, 255);
+            }
+        }
+        
+        ofFill(); // heading
+        ofSetColor(255, 255, 255, 255);
+        ofRect(leftColumn-1 + imuColumnLeft, anchory+((8) * stepsize)+7, width-leftColumn-103, 16);
+        
+        ofFill(); // button
+        ofSetColor(255, 255, 255, 255);
+        ofRect(leftColumn-1 + imuColumnLeft, anchory+((11) * stepsize)+7, width-leftColumn-103, 16);
+        
+        ofFill(); // pressure
+        ofSetColor(255, 255, 255, 255);
+        ofRect(leftColumn-1 + imuColumnLeft, anchory+((13) * stepsize)+7, width-leftColumn-103, 16);
+        
+        ofFill(); // keycode
+        ofSetColor(255, 255, 255, 255);
+        ofRect(leftColumn-1 + imuColumnLeft, anchory+((15) * stepsize)+7, width-leftColumn-103, 16);
+        
+        for(i = 0; i < 25; i++) { // keys
+            ofSetColor(0, 0, 0, 255);
+            yy = anchory+(i * stepsize);
+            TTF.drawString(ofToString(serialThreadObject->keys[i].raw, 6), leftColumn, yy );
+            //                printf("%lx ", keys[i].raw);
+            TTF.drawString(ofToString(serialThreadObject->keys[i].continuous, 6), midColumn, yy);
+            ofNoFill();
+            ofSetColor(91, 91, 91, 255);
+            ofRect(rightColumn, yy-9, 104, 12);
+            ofFill();
+            ofSetColor(0, 0, 0, 127);
+            if(serialThreadObject->calibrate[i]) {
+                ofSetColor(255, 127, 0, 191);
+                ofRect( rightColumn + (104 * serialThreadObject->keys[i].minimum * serialThreadObject->scale10), yy-7, (104 * (serialThreadObject->keys[i].maximum - serialThreadObject->keys[i].minimum) * serialThreadObject->scale10), 9);
+                ofSetColor(0, 0, 0, 255);
+                ofRect( rightColumn + (104 * (serialThreadObject->keys[i].raw * serialThreadObject->scale10)), yy-9, 2, 12);
+                
+            } else {
+                ofRect( rightColumn + (104 * serialThreadObject->keys[i].continuous), yy-9, 2, 12);
+                ofSetColor(91, 91, 91, 255);
+                ofLine(rightColumn + (104 * serialThreadObject->keys[i].threshDown), yy-9, rightColumn + (104 * serialThreadObject->keys[i].threshDown), yy+4);
+                ofLine(rightColumn + (104 * serialThreadObject->keys[i].threshUp), yy-9, rightColumn + (104 * serialThreadObject->keys[i].threshUp), yy+4);
+            }
+            // draw binary boxes
+            ofNoFill();
+            ofSetColor(91, 91, 91, 255);
+            ofRect(farRightColumn, yy-9, 12, 12);
+            
+            if(serialThreadObject->keys[i].binary) {
+                ofFill();
+                ofSetColor(0, 0, 0, 255);
+                ofRect(farRightColumn+2, yy-6, 7, 7);
+            }
+            // individual toggles
+            if(serialThreadObject->calibrateSwitch) {
+                if(serialThreadObject->calibrateSingle) {
+                    
+                    if(serialThreadObject->calibrate[i]){
+                        ofFill();
+                        ofSetColor(255,127,0, 191);
+                        ofRect(rightColumn +126, yy-9, 16, 12);
+                    }
+                    ofNoFill();
+                    ofSetColor(0,0,0);
+                    ofRect(rightColumn +126, yy-9, 16, 12);
+                    TTF.drawString("c", rightColumn+130, yy+1);
+                }
+            }
+        }
+        
+        for(i = 0; i < 9; i++) { // imu
+            ofSetColor(0, 0, 0, 255);
+            //				yy = anchory+((i+25) * stepsize);
+            yy = anchory+((i) * stepsize);
+            TTF.drawString( ofToString(serialThreadObject->raw[i], 6) , leftColumn + imuColumnLeft, yy );
+            TTF.drawString(ofToString(serialThreadObject->IMU[i], 6), midColumn  + 10 + imuColumnLeft, yy);
+            ofNoFill();
+            ofSetColor(91, 91,91, 255);
+            ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
+            ofFill();
+            ofSetColor(0, 0, 0, 255);
+            ofRect( rightColumn + imuColumnLeft + (104 * serialThreadObject->IMU[i]), yy-9, 2, 12);
+            ofNoFill();
+            ofSetColor(91, 91, 91, 255);
+            ofLine(rightColumn+52 + imuColumnLeft, yy-9, rightColumn+52 + imuColumnLeft, yy+4);
+        }
+        
+        // heading
+        ofSetColor(0, 0, 0, 255);
+        yy = anchory+((9) * stepsize);
+        TTF.drawString( ofToString(serialThreadObject->heading, 2) , midColumn  + 10 + imuColumnLeft, yy );
+        ofNoFill();
+        ofSetColor(91, 91,91, 255);
+        ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
+        ofFill();
+        ofSetColor(0, 0, 0, 255);
+        ofRect( rightColumn + imuColumnLeft + 52 + (serialThreadObject->heading/3.46153846153846), yy-9, 2, 12);
+        ofNoFill();
+        ofSetColor(91, 91, 91, 255);
+        ofLine(rightColumn+52 + imuColumnLeft, yy-9, rightColumn+52 + imuColumnLeft, yy+4);
+
+        // tilt
+        ofSetColor(0, 0, 0, 255);
+        yy = anchory+((10) * stepsize);
+        TTF.drawString( ofToString(serialThreadObject->tilt, 2) , midColumn  + 10 + imuColumnLeft, yy );
+        ofNoFill();
+        ofSetColor(91, 91,91, 255);
+        ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
+        ofFill();
+        ofSetColor(0, 0, 0, 255);
+        ofRect( rightColumn + imuColumnLeft + 52 + (52 * serialThreadObject->tilt), yy-9, 2, 12);
+        ofNoFill();
+        ofSetColor(91, 91, 91, 255);
+        ofLine(rightColumn+52 + imuColumnLeft, yy-9, rightColumn+52 + imuColumnLeft, yy+4);
+        
+        // air
+        ofSetColor(0, 0, 0, 255);
+        //			yy = anchory+(34 * stepsize);
+        yy = anchory+(14 * stepsize);
+        TTF.drawString(ofToString(serialThreadObject->air[0], 2), leftColumn + imuColumnLeft, yy );
+        TTF.drawString(ofToString(serialThreadObject->airValue.continuous, 2), midColumn  + 10 + imuColumnLeft, yy);
+        
+        TTF.drawString(ofToString(serialThreadObject->keycode, 2), midColumn  + 10 + imuColumnLeft, anchory+(16 * stepsize) );
+        if(serialThreadObject->validMidiNote) {
+            TTF.drawString(ofToString(serialThreadObject->midinote, 2), midColumn  + 10 + imuColumnLeft, anchory+(17 * stepsize));
+        }
+        ofNoFill();
+        ofSetColor(91, 91, 91, 255);
+        ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
+        ofFill();
+        ofSetColor(0, 0, 0, 127);
+        ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((serialThreadObject->airLong[0] - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
+        
+        if(serialThreadObject->airValue.calibratePressureRange) {
+            ofSetColor(255, 224, 0, 191);
+            ofRect( rightColumn + imuColumnLeft, yy-7, (103), 9);
+            // TODO figure scaling for the rangebars
+            ofSetColor(0, 0, 0, 255);
+            ofRect( rightColumn + imuColumnLeft + (104 * (CLAMP( ((serialThreadObject->airValue.continuous - 500.0) * 0.001), 0, 1))), yy-9, 2, 12);
+        } else {
+            if(serialThreadObject->airValue.calibrationFlag){
+                ofFill();
+                ofSetColor(255, 0, 0, 255);
+                ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
+            }else{
+                ofNoFill();
+                ofSetColor(91, 91, 91, 255);
+                ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
+            }
+            ofFill();
+            ofSetColor(0, 0, 0, 127);
+            ofRect( rightColumn + imuColumnLeft + CLAMP((104 * serialThreadObject->airValue.continuous), 0, 104), yy-9, 2, 12);
+        }
+        
+        
+        
+        
+        // buttons
+        ofSetColor(0, 0, 0, 255);
+        //			yy = anchory+((35) * stepsize);
+        yy = anchory+((12) * stepsize);
+        TTF.drawString( ofToString(serialThreadObject->button[2], 1), midColumn + 10 + imuColumnLeft, yy );
+        TTF.drawString( ofToString(serialThreadObject->button[1], 1), midColumn + 10 + 12 + imuColumnLeft, yy );
+        TTF.drawString( ofToString(serialThreadObject->button[0], 1), midColumn + 10 + 24 + imuColumnLeft, yy );
+        
+        ofNoFill();
+        ofSetColor(91, 91, 91, 255);
+        ofRect(rightColumn + imuColumnLeft, yy-9, 12, 12);
+        ofRect(rightColumn + imuColumnLeft + 14 , yy-9, 12, 12);
+        ofRect(rightColumn + imuColumnLeft + 28 , yy-9, 12, 12);
+        
+        ofFill();
+        ofSetColor(0, 0, 0, 255);
+        if(serialThreadObject->button[2]) {
+            ofRect(rightColumn + imuColumnLeft + 2, yy-6, 7, 7);
+        }
+        if(serialThreadObject->button[1]) {
+            ofRect(rightColumn + imuColumnLeft + 16, yy-6, 7, 7);
+        }
+        if(serialThreadObject->button[0]) {
+            ofRect(rightColumn + imuColumnLeft + 30, yy-6, 7, 7);
+        }
+        
+        // battery
+        //            ofSetColor(0, 0, 0, 255);
+        ////			yy = anchory+((36) * stepsize);
+        //            yy = 40;
+        //			TTF.drawString( "main: "+ofToString((int)(batteryLevelRight*12.5))+"%", anchorx+82 + 360, yy );
+        //			TTF.drawString( "mouthpiece: "+ofToString((int)(batteryLevelAir*12.5))+"%", leftColumn+12 + 360, yy );
+        
+        if(serialThreadObject->calibrateSwitch) {
+            ofFill();
+            ofSetColor(255, 127, 0);
+            ofRect(375, 480, 124, 20);
+            ofNoFill();
+            ofSetColor(127, 127, 127);
+            ofRect(375, 480, 124, 20);
+            ofSetColor(0, 0, 0);
+            TTF.drawString("Calibrating Keys", 375+12, 480+14);
+            
+            if(serialThreadObject->calibrateSingle == 0) {
+                ofFill();
+                ofSetColor(255, 127, 0);
+                ofRect(375, 458, 124, 20);
+                ofNoFill();
+                ofSetColor(127, 127, 127);
+                ofRect(375, 458, 124, 20);
+                ofSetColor(0, 0, 0);
+                TTF.drawString("Calibrate All...", 375+24, 458+14);
+            }else{
+                ofNoFill();
+                ofSetColor(127, 127, 127);
+                ofRect(375, 458, 124, 20);
+                ofSetColor(0, 0, 0);
+                TTF.drawString("Calibrate All Keys", 375+10, 458+14);
+            }
+            
+            ofNoFill();
+            ofSetColor(127, 127, 127);
+            ofRect(375, 436, 124, 20);
+            ofSetColor(0, 0, 0);
+            TTF.drawString("Reset Key Calibr.", 375+12, 436+14);
+        }
+        
+        if(serialThreadObject->airValue.calibratePressureRange) {
+            ofFill();
+            ofSetColor(255, 224, 0);
+            ofRect(502, 480, 124, 20);
+            ofNoFill();
+            ofSetColor(127, 127, 127);
+            ofRect(502, 480, 124, 20);
+            ofSetColor(0, 0, 0);
+            TTF.drawString("Calibrating Air", 502+12, 480+14);
+        }
+
+    }else{
+        //			str = "can't lock!\neither an error\nor the thread has stopped";
+        ofLog(OF_LOG_ERROR, "SabreServer: couldn't start serial Thread !! can't lock!\neither an error\nor the thread has stopped");
+    }
+
+
+
+
+
 #pragma mark draw levels
     
     ofSetColor(63, 63, 63, 255);
@@ -389,9 +684,9 @@ void sabreServer::draw()
     //    serialThreadObject->linkQualityRight*0.390625
     //    serialThreadObject->linkQualityAir*0.390625
     
-	if(drawValues) {
-		serialThreadObject->draw();
-	}
+//	if(drawValues) {
+//		serialThreadObject->draw();
+//	}
 	
 	if(menuState) {
 		numMenuItems = (int)serialThreadObject->deviceList.size() / 2;
@@ -672,8 +967,9 @@ bool sabreServer::readPrefs()
 		serialThreadObject->threshUp = XML.getValue("sabre:thresholds:up", 0.8);
 		serialThreadObject->debounceTimeOut = XML.getValue("sabre:debounce-timeout", 0);
         
-        serialThreadObject->fullspeedOSC = XML.getValue("sabre:OSCsender:fullspeed", 0);
-        OSCThreadObject->OSCInterval = XML.getValue("sabre:OSCsender:interval", 10);
+        serialThreadObject->sendRawValues = XML.getValue("sabre:OSCsender:sendRawValues", 0);
+        serialThreadObject->OSCsendingInterval = XML.getValue("sabre:OSCsender:interval", 10);
+        serialThreadObject->numOSCloops = serialThreadObject->OSCsendingInterval * 2;
 
 		for(i = 0; i < MAXNUM; i++) {
 			serialThreadObject->keys[i].threshDown = serialThreadObject->threshDown;
@@ -833,7 +1129,7 @@ void sabreServer::dumpPrefs()
 	printf("accelResolution %d\n", serialThreadObject->accelResolution);
 	printf("accelOffset %ld\n", serialThreadObject->accelOffset);
 	printf("accelScale %2.12f\n", serialThreadObject->accelScale);
-	printf("OSCfullspeed %d\n", serialThreadObject->fullspeedOSC);
+//	printf("OSCfullspeed %d\n", serialThreadObject->fullspeedOSC);
 	printf("OSCinterval %d\n", OSCThreadObject->OSCInterval);
     printf("OSCtoSC %d\n", sendOscToSC);
     
@@ -1002,6 +1298,9 @@ void sabreServer::keyReleased(int key)
 			break;
 		case 'r': // r key:
 			break;
+		case 'd':
+			dumpPrefs();
+			break;
 		case 'p':
 			// sabreServer::readPrefs();
 			break;
@@ -1053,14 +1352,14 @@ void sabreServer::mousePressed(int x, int y, int button)
             ofSleepMillis(5);
 			startSerial();
             
-            if(serialThreadObject->fullspeedOSC){
+//            if(serialThreadObject->fullspeedOSC){
                 startOSCfullspeed();
-            }else{
-                startOSC();
-                if(sendOscToSC){
-                    startOSCforSC();
-                }
-            }
+//            }else{
+//                startOSC();
+//                if(sendOscToSC){
+//                    startOSCforSC();
+//                }
+//            }
 			drawValues = 1;
             serialThreadObject->drawValues = 1;
 //			serialThreadObject->status = true;
@@ -1117,14 +1416,14 @@ void sabreServer::mousePressed(int x, int y, int button)
                         ofSleepMillis(5);
 						startSerial();
                         
-                        if(serialThreadObject->fullspeedOSC){
+//                        if(serialThreadObject->fullspeedOSC){
                             startOSCfullspeed();
-                        }else{
-                            startOSC();
-                            if(sendOscToSC){
-                                startOSCforSC();
-                            }
-                        }
+//                        }else{
+//                            startOSC();
+//                            if(sendOscToSC){
+//                                startOSCforSC();
+//                            }
+//                        }
 					
 						XML.pushTag("sabre", 0);
 						XML.removeTag("serialport", 0);

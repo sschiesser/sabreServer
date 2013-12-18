@@ -51,13 +51,15 @@ public:
 		maximum = -10000;
 		scale = 1.0;
         offset = 0.0;
-		inverted = 0;
-		binary = 0;
-		binaryOld = 0;
-		binaryChanged = 0;
-		changed = 0;
+		binary = false;
+		binaryOld = false;
+		binaryChanged = false;
+        inverted = false;
+		changed = false;
+        threshDown = 0.5;
+        threshUp = 0.5;
+        lastTriggerTime = 0;
 		oscaddress = "/nada";
-		lastTriggerTime = 0;
 	}
 
 	virtual ~sabreKeys(){};
