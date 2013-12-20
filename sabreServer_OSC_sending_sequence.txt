@@ -1,0 +1,52 @@
+0 frame begin 			(/sabre/dataframe begin)
+
+1 timestamps server
+
+2 timestamp L
+3 timestamp R
+
+4 air timestamp
+5 air pressure
+6 air temperature
+
+7 keycode
+8 midicode
+
+9 button
+10 button
+11 button
+
+12 keys binary
+|
+36 
+
+37 keys continuous
+|
+61
+
+62 keys raw (if switched on)
+|
+86
+
+87 IMU accelero scaled
+88 IMU gyro scaled
+89 IMU magneto scaled
+90 IMU accelero summed
+91 IMU gyro summed
+92 IMU magneto summed
+93 IMU heading from accelerometer
+94 IMU tilt from accelerometer
+95 IMU temperature in degreee celsius
+
+96 IMU accelero raw (if switched on)
+97 IMU gyro raw
+98 IMU magneto raw
+
+99 air battery
+100 air link quality
+101 left link quality
+102 right link quality
+103 battery level main
+
+104 frame end 				(/sabre/dataframe end)
+
