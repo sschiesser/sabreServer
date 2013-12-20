@@ -17,7 +17,7 @@
     <network>
         <sender id="1">
             <IP>localhost</IP>
-            <port>40012</port>
+            <port>40002</port>
             <active>1</active>        
 			<!-- activate this OSC sender -->
         </sender>
