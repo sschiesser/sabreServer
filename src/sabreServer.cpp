@@ -44,11 +44,6 @@ void sabreServer::setup()
 	titleString = "sabreServer version 0.9";
 	
 	serialThreadObject = new(threadedSerial);
-	OSCThreadObject = new(threadedOSC);
-    OSCThreadObject2 = new(threadedOSC);
-
-    OSCThreadObject->serialObject = serialThreadObject; // tell OSCThread about serialThread
-    OSCThreadObject2->serialObject = serialThreadObject; // tell OSCThread2 about serialThread
 
 	TTF.loadFont("lucidagrande.ttf", 8, 1, 1, 0);
 	TTFsmall.loadFont("lucidagrande.ttf", 8, 1, 0, 0);
@@ -60,19 +55,18 @@ void sabreServer::setup()
 	drawValues = 0;
     serialThreadObject->drawValues = 0;
 	menuState = 0;
-    sendOscToSC = 0;
 
 	serialThreadObject->serialport = "/dev/tty.usbserial-A7005Ghs";
 	serialThreadObject->baudrate = 230400;
-    
-	OSCThreadObject->sendIP  = serialThreadObject->sendIP = "127.0.0.1";
-	OSCThreadObject->sendport = serialThreadObject->sendport = 40000;
-    
-    OSCThreadObject2->sendIP  = serialThreadObject->sendIP = "127.0.0.1";
-	OSCThreadObject2->sendport = serialThreadObject->sendport = 57120; // default SC port
-    
-	receiveport = 40001;
+
+	receiveport = 41001;
 	serialThreadObject->debounceTimeOut = 0;
+    
+    for(int i = 0; i < NUMOSCSENDERS; i++) {
+        serialThreadObject->sendIP[i] = "127.0.0.1";
+        serialThreadObject->sendport[i] = 40002+i;
+        serialThreadObject->senderActive[i] = false;
+    }
 
 	status = readPrefs();	
 	if(status) {
@@ -111,18 +105,6 @@ void sabreServer::setup()
 
 void sabreServer::update()
 {
-    
-// TODO trying to fix serial start problems: not solved yet!
-//	float now = ofGetElapsedTimef();
-
-//	if(runOnce == 1) {
-//		if(now > (runOnceStart + runOnceDelay) )
-//		{
-//            startSerial();
-//            startOSC();
-//            runOnce = 0;
-//		}
-//	}
 	receiveOSC();
 }
 
@@ -172,8 +154,8 @@ void sabreServer::draw()
 		} else {
 			ofSetColor(127, 127, 127, 255);
 		}
-		TTFsmall.drawString(status1, anchorx, 34);
-		TTFsmall.drawString(status2, anchorx, 48);
+		TTFsmall.drawString(status1, anchorx+190, 18);
+		TTFsmall.drawString(status2[whichStatus], anchorx, 42);
 
 		// separator lines
 //		ofSetColor(240, 240, 240, 127);
@@ -742,12 +724,12 @@ void sabreServer::startSerial()
     
 	if(serialThreadObject->status) {
         serialThreadObject->serial.flush(true, true);
-		status1 = "Device open ";//+serialThreadObject->serialport+" "+ofToString(serialThreadObject->baudrate);
+		status1 = "Open";//+serialThreadObject->serialport+" "+ofToString(serialThreadObject->baudrate);
 // 		ofSetWindowTitle(serialThreadObject->serialport);
 		ofSetWindowTitle(titleString+" - Connection OK");
 		serialThreadObject->start(); // the serial thread
 	} else {
-		status1 = "Unable to open ";//+serialThreadObject->serialport;
+		status1 = "NOT open";//+serialThreadObject->serialport;
         serialThreadObject->serial.flush(true, true);
 		serialThreadObject->stop(); // the thread
 		ofSetWindowTitle(titleString+" - No Connection");
@@ -771,79 +753,39 @@ void sabreServer::stopSerial()
 	redrawFlag = 1;
 }
 
-
 void sabreServer::startOSC()
-{
-	if(OSCThreadObject->status) {
-        OSCThreadObject->stop(); // stops the thread, deletes the object which also closes the socket
-	}
-    // open an outgoing connection to sendIP:PORT
-	OSCThreadObject->status = OSCThreadObject->oscSender.setup( serialThreadObject->sendIP.c_str(), serialThreadObject->sendport);
-	if(OSCThreadObject->status) {
-        OSCThreadObject->start(); // the OSC thread
-		status2 = "Sending OSC to "+serialThreadObject->sendIP+" on port "+ofToString(serialThreadObject->sendport);
-	} else {
-        ofSystemAlertDialog("Sabre Server Unable to open Network "+serialThreadObject->sendIP+" on port "+ofToString(serialThreadObject->sendport));
-		status2 = "Unable to open Network "+serialThreadObject->sendIP+" on port "+ofToString(serialThreadObject->sendport);
-	}
-	redrawFlag = 1;
-}
-
-void sabreServer::stopOSC()
-{
-	if(OSCThreadObject->status) {
-        OSCThreadObject->stop(); // stops the thread, deletes the object which also closes the socket
-		OSCThreadObject->status = false;
-	}
-	redrawFlag = 1;
-}
-
-void sabreServer::startOSCfullspeed()
 {
 	if(serialThreadObject->status) {
         serialThreadObject->stop(); // stops the thread, deletes the object which also closes the socket
 	}
     
-    // open an outgoing connection to sendIP:PORT
-	serialThreadObject->status = serialThreadObject->sender.setup( serialThreadObject->sendIP.c_str(), serialThreadObject->sendport);
-	if(serialThreadObject->status) {
-        serialThreadObject->start(); // the OSC thread
-		status2 = "Sending OSC to "+serialThreadObject->sendIP+" on port "+ofToString(serialThreadObject->sendport);
-	} else {
-        ofSystemAlertDialog("Sabre Server Unable to open Network "+serialThreadObject->sendIP+" on port "+ofToString(serialThreadObject->sendport));
-		status2 = "Unable to open Network "+serialThreadObject->sendIP+" on port "+ofToString(serialThreadObject->sendport);
-	}
+    for(int i = 0; i < NUMOSCSENDERS; i++) {
+        if(serialThreadObject->senderActive[i]) {
+            // open an outgoing connection to sendIP:PORT
+            serialThreadObject->status = serialThreadObject->sender[i].setup( serialThreadObject->sendIP[i].c_str(), serialThreadObject->sendport[i]);
+            if(serialThreadObject->status) {
+                serialThreadObject->start(); // the OSC thread
+                
+                status2[i] = "OSC-stream "+ofToString(i+1)+": IP "+serialThreadObject->sendIP[i]+" Port "+ofToString(serialThreadObject->sendport[i])+" on";
+            } else {
+                ofSystemAlertDialog("Sabre Server Unable to open Network "+serialThreadObject->sendIP[0]+" on port "+ofToString(serialThreadObject->sendport[i]));
+                status2[i] = "Unable to open Network "+serialThreadObject->sendIP[i]+" on port "+ofToString(serialThreadObject->sendport[i]);
+            }
+        }else{
+            status2[i] = "OSC-stream "+ofToString(i+1)+" OFF - "+serialThreadObject->sendIP[i]+" / "+ofToString(serialThreadObject->sendport[i]);
+        }
+    }
+    
 	redrawFlag = 1;
 }
 
-void sabreServer::stopOSCfullspeed()
+void sabreServer::stopOSC()
 {
 	if(serialThreadObject->status) {
         serialThreadObject->stop(); // stops the thread, deletes the object which also closes the socket
 		serialThreadObject->status = false;
 	}
 	redrawFlag = 1;
-}
-
-void sabreServer::startOSCforSC()
-{
-    if(OSCThreadObject2->status) {
-        OSCThreadObject2->stop(); // stops the thread, deletes the object which also closes the socket
-	}
-    // open an outgoing connection to sendIP:PORT
-	OSCThreadObject2->status = OSCThreadObject2->oscSender.setup( serialThreadObject->sendIP.c_str(), 57120);
-	if(OSCThreadObject2->status) {
-        OSCThreadObject2->start(); // the OSC thread
-	} else {
-        ofSystemAlertDialog("Sabre Server Unable to open OSC to SC Network "+serialThreadObject->sendIP+" on port  57120");
-	}
-}
-void sabreServer::stopOSCforSC()
-{
-	if(OSCThreadObject2->status) {
-        OSCThreadObject2->stop(); // stops the thread, deletes the object which also closes the socket
-		OSCThreadObject2->status = false;
-	}
 }
 
 void sabreServer::getSerialDeviceList()
@@ -884,12 +826,12 @@ void sabreServer::receiveOSC()
 			receiveport = m.getArgAsInt32( 0 );
 			receiver.setup( receiveport );
 		}else if ( strcmp( temp.c_str(), "/sabre/network/sender/port" ) == 0 ) {
-			serialThreadObject->sendport = m.getArgAsInt32( 0 );
+			serialThreadObject->sendport[0] = m.getArgAsInt32( 0 );
             // TODO switch between fulspeed or OSc thread
 //			serialThreadObject->sender.setup( serialThreadObject->sendIP, serialThreadObject->sendport );
 //			status2 = "sending OSC to "+serialThreadObject->sendIP+" on port "+ofToString(serialThreadObject->sendport);
 		}else if ( strcmp( temp.c_str(), "/sabre/network/sender/IP" ) == 0 ) {
-			serialThreadObject->sendIP = m.getArgAsString(0);
+			serialThreadObject->sendIP[0] = m.getArgAsString(0);
             // TODO switch between fulspeed or OSc thread
 //			serialThreadObject->sender.setup( m.getArgAsString(0), serialThreadObject->sendport );
 //			status2 = "sending OSC to "+serialThreadObject->sendIP+" on port "+ofToString(serialThreadObject->sendport);
@@ -908,7 +850,7 @@ void sabreServer::receiveOSC()
 			for(i = 0; i < MAXNUM; i++) {
 				serialThreadObject->calibrate[i] = !serialThreadObject->calibrate[i];
 			}
-			printf("calibrate is %d\n", serialThreadObject->calibrateSwitch);
+//			printf("calibrate is %d\n", serialThreadObject->calibrateSwitch);
             
 		}else if ( strcmp( temp.c_str(), "/sabre/calibrate" ) == 0 ) {
 			int which = m.getArgAsInt32( 0 );
@@ -921,7 +863,7 @@ void sabreServer::receiveOSC()
 			if(serialThreadObject->calibrate[which] == 0) { // before we switch it off
 				writeScaling(); // we write the values into the prefs
 			}
-			printf("calibrate[%d] is %d\n", which, serialThreadObject->calibrate[which]);
+//			printf("calibrate[%d] is %d\n", which, serialThreadObject->calibrate[which]);
 		}else if ( strcmp( temp.c_str(), "/sabre/calibrate/air" ) == 0 ) {
 			int which = m.getArgAsInt32( 0 );
 			serialThreadObject->airValue.calibratePressureRange = m.getArgAsInt32( 1 );
@@ -933,7 +875,7 @@ void sabreServer::receiveOSC()
 			if(serialThreadObject->airValue.calibratePressureRange == 0) { // before we switch it off
 				writeScaling(); // we write the values into the prefs
 			}
-			printf("calibrateAir is %d\n", serialThreadObject->airValue.calibratePressureRange);
+//			printf("calibrateAir is %d\n", serialThreadObject->airValue.calibratePressureRange);
 		}
 	}
 }
@@ -951,12 +893,30 @@ bool sabreServer::readPrefs()
 	if(result) {
 		str1 = XML.getValue("sabre:serialport", "/dev/tty.usbserial-A6007WWR");
 		serialThreadObject->serialport = str1;
-		
-		OSCThreadObject->sendIP = serialThreadObject->sendIP = XML.getValue("sabre:network:sender:IP", "127.0.0.1");
-		OSCThreadObject->sendport = serialThreadObject->sendport = XML.getValue("sabre:network:sender:port", 40000);
-                
+        
+        
+        numTags = XML.getNumTags("sabre:network:sender");
+		if(numTags > 0) {
+			XML.pushTag("sabre", numTags-1);
+            XML.pushTag("network", numTags-1);
+
+			numPtTags = XML.getNumTags("sender");
+			if(numPtTags > 0) {
+				totalToRead = MIN(numPtTags, NUMOSCSENDERS);
+				for(i = 0; i < totalToRead; i++) {
+					ID = XML.getAttribute("sender", "id", 0, i);
+					ID--;
+                    serialThreadObject->sendIP[ID] = XML.getValue("sender:IP", "127.0.0.1", i);
+                    serialThreadObject->sendport[ID] = XML.getValue("sender:port", 40002+ID, i);
+                    serialThreadObject->senderActive[ID] = XML.getValue("sender:active", 0, i);
+				}
+			}
+            XML.popTag();
+            XML.popTag();
+        }
+        serialThreadObject->calcResetID();
+
 		receiveport = XML.getValue("sabre:network:receiver:port", 40001);
-        sendOscToSC = XML.getValue("sabre:network:OSCtoSC", 0);
 
 		serialThreadObject->baudrate = XML.getValue("sabre:baudrate", 57600);
 		framerate = XML.getValue("sabre:framerate", 20);
@@ -1073,40 +1033,40 @@ bool sabreServer::readPrefs()
                     serialThreadObject->airValue.scale = 0.0;
                 }
 			}						
-			
-			ID = XML.getAttribute("system", "id", 0, i);
-			
-			str1 = XML.getValue("system:oscaddress", "/sabre/systime", i);
-			if(str1.length() > 0) {
-				serialThreadObject->timestampAddressServer = str1+"/server";
-                serialThreadObject->timestampAddressLeft = str1+"/left";
-                serialThreadObject->timestampAddressRight = str1+"/right";
-                serialThreadObject->timestampAddressAir = str1+"/air";  
-			}	
-			
-//			ID = XML.getAttribute("keycode", "id", 0, i);
-			
-			str1 = XML.getValue("keycode:oscaddress", "/sabre/keycode", i);
-			if(str1.length() > 0) {
-				serialThreadObject->keycodeaddress = str1;
-			}
-			
-//			ID = XML.getAttribute("midinote", "id", 0, i);
-			
-			str1 = XML.getValue("midinote:oscaddress", "/sabre/note", i);
-			if(str1.length() > 0) {
-				serialThreadObject->midinoteaddress = str1;
-			}	
-			
-//			ID = XML.getAttribute("heading", "id", 0, i);
-			
-			str1 = XML.getValue("heading:oscaddress", "/sabre/heading", i);
-			if(str1.length() > 0) {
-				serialThreadObject->headingaddress = str1;
-			}	
-			
+            
 			XML.popTag();
 		}
+        ID = XML.getAttribute("system", "id", 0, i);
+        
+        str1 = XML.getValue("system:oscaddress", "/sabre/systime", i);
+        if(str1.length() > 0) {
+            serialThreadObject->timestampAddressServer = str1+"/server";
+            serialThreadObject->timestampAddressLeft = str1+"/left";
+            serialThreadObject->timestampAddressRight = str1+"/right";
+            serialThreadObject->timestampAddressAir = str1+"/air";  
+        }	
+        
+//			ID = XML.getAttribute("keycode", "id", 0, i);
+        
+        str1 = XML.getValue("keycode:oscaddress", "/sabre/keycode", i);
+        if(str1.length() > 0) {
+            serialThreadObject->keycodeaddress = str1;
+        }
+        
+//			ID = XML.getAttribute("midinote", "id", 0, i);
+        
+        str1 = XML.getValue("midinote:oscaddress", "/sabre/note", i);
+        if(str1.length() > 0) {
+            serialThreadObject->midinoteaddress = str1;
+        }	
+        
+//			ID = XML.getAttribute("heading", "id", 0, i);
+        
+        str1 = XML.getValue("heading:oscaddress", "/sabre/heading", i);
+        if(str1.length() > 0) {
+            serialThreadObject->headingaddress = str1;
+        }	
+
         ofLog(OF_LOG_NOTICE, "success reading Settings File");
 
 	}
@@ -1118,8 +1078,23 @@ void sabreServer::dumpPrefs()
 	int i;
 	
 	printf("serialport %s\n", serialThreadObject->serialport.c_str());
-	printf("sender IP %s\n", serialThreadObject->sendIP.c_str());
-	printf("sender port %d\n", serialThreadObject->sendport);
+    
+	printf("sender 1 IP %s\n", serialThreadObject->sendIP[0].c_str());
+	printf("sender 1 port %d\n", serialThreadObject->sendport[0]);
+	printf("sender 1 active %d\n", serialThreadObject->senderActive[0]);
+
+    printf("sender 2 IP %s\n", serialThreadObject->sendIP[1].c_str());
+	printf("sender 2 port %d\n", serialThreadObject->sendport[1]);
+	printf("sender 2 active %d\n", serialThreadObject->senderActive[1]);
+    
+    printf("sender 3 IP %s\n", serialThreadObject->sendIP[2].c_str());
+	printf("sender 3 port %d\n", serialThreadObject->sendport[2]);
+	printf("sender 3 active %d\n", serialThreadObject->senderActive[2]);
+    
+    printf("sender 4 IP %s\n", serialThreadObject->sendIP[3].c_str());
+	printf("sender 4 port %d\n", serialThreadObject->sendport[3]);
+	printf("sender 4 active %d\n", serialThreadObject->senderActive[3]);
+    
 	printf("receive port %d\n", receiveport);
 	printf("baudrate %d\n", serialThreadObject->baudrate);
 	printf("framerate %d\n", framerate);
@@ -1130,8 +1105,7 @@ void sabreServer::dumpPrefs()
 	printf("accelOffset %ld\n", serialThreadObject->accelOffset);
 	printf("accelScale %2.12f\n", serialThreadObject->accelScale);
 //	printf("OSCfullspeed %d\n", serialThreadObject->fullspeedOSC);
-	printf("OSCinterval %d\n", OSCThreadObject->OSCInterval);
-    printf("OSCtoSC %d\n", sendOscToSC);
+	printf("OSCinterval %d\n", serialThreadObject->OSCsendingInterval);
     
 	for(i = 0; i < serialThreadObject->numKeyAddr; i++) {
 		printf("key %d\n", i);
@@ -1319,6 +1293,24 @@ void sabreServer::keyReleased(int key)
 		case 'w':
 			// sabreServer::writePrefs();
 			break;
+        case OF_KEY_LEFT:
+            break;
+        case OF_KEY_UP:
+            whichStatus++;
+            if(whichStatus >3){
+                whichStatus = 0;
+            }
+            redrawFlag = 1;
+            break;
+        case OF_KEY_RIGHT:
+            break;
+        case OF_KEY_DOWN:
+            whichStatus--;
+            if(whichStatus < 0){
+                whichStatus = 3;
+            }
+            redrawFlag = 1;
+            break;
 	}
 }
 
@@ -1352,14 +1344,8 @@ void sabreServer::mousePressed(int x, int y, int button)
             ofSleepMillis(5);
 			startSerial();
             
-//            if(serialThreadObject->fullspeedOSC){
-                startOSCfullspeed();
-//            }else{
-//                startOSC();
-//                if(sendOscToSC){
-//                    startOSCforSC();
-//                }
-//            }
+            startOSC();
+
 			drawValues = 1;
             serialThreadObject->drawValues = 1;
 //			serialThreadObject->status = true;
@@ -1416,15 +1402,8 @@ void sabreServer::mousePressed(int x, int y, int button)
                         ofSleepMillis(5);
 						startSerial();
                         
-//                        if(serialThreadObject->fullspeedOSC){
-                            startOSCfullspeed();
-//                        }else{
-//                            startOSC();
-//                            if(sendOscToSC){
-//                                startOSCforSC();
-//                            }
-//                        }
-					
+                        startOSC();
+
 						XML.pushTag("sabre", 0);
 						XML.removeTag("serialport", 0);
 						XML.setValue("serialport", serialThreadObject->serialport, 0);
@@ -1479,13 +1458,13 @@ void sabreServer::mousePressed(int x, int y, int button)
                 writeScaling();
 
             }
-            printf("serialThreadObject->calibrateSingle is %d\n", serialThreadObject->calibrateSingle);
+//            printf("serialThreadObject->calibrateSingle is %d\n", serialThreadObject->calibrateSingle);
         }
         
         if(x > 346 && x < 362){
             int yy = y - 57;
             i = yy / 18;
-            printf("clicked inside calibrate toggle Nr. %d at pos %d %d\n",i, x, y);
+//            printf("clicked inside calibrate toggle Nr. %d at pos %d %d\n",i, x, y);
             if(serialThreadObject->calibrate[i] == 0){
                 serialThreadObject->calibrate[i] = 1;
                 resetSingleCalibrate(i);
@@ -1496,7 +1475,7 @@ void sabreServer::mousePressed(int x, int y, int button)
         }
 
         if(x > 375 && x < 500 && y > 436 && y < 456) {
-            printf("clicked in reset Calibration");
+//            printf("clicked in reset Calibration");
             for(int i = 0; i < serialThreadObject->numKeyAddr; i++)
             {
                 serialThreadObject->keys[i].minimum = 0;
@@ -1510,7 +1489,7 @@ void sabreServer::mousePressed(int x, int y, int button)
     if(x > 502 && x < 627 && y > 480 && y < 500) {
 		if(serialThreadObject->airValue.calibratePressureRange == true){
             serialThreadObject->airValue.calibratePressureRange = false;
-            printf("finished calibrating air with values minimum %f maximum %f\n",serialThreadObject->airValue.minimum, serialThreadObject->airValue.maximum);
+//            printf("finished calibrating air with values minimum %f maximum %f\n",serialThreadObject->airValue.minimum, serialThreadObject->airValue.maximum);
             
             writeScaling();
         } else {

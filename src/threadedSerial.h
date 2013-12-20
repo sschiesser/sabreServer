@@ -45,12 +45,15 @@
 #include "sabreKeys.h"
 #include "sabreMidiNote.h"
 #include "sabreAir.h"
+//#include "OSCsender.h"
 
+#define DATAFRAMELENGTH 105
 #define MAXNUM 64 // maximum number messages to allocate
 #define PATTERNLENGTH_1 23 // maximumnumber of bytes in a left hand message
-#define PATTERNLENGTH_2 42 // maximumnumber of bytes in a right hand message
+#define PATTERNLENGTH_2 40 // maximumnumber of bytes in a right hand message
 #define PATTERNLENGTH_3 15 // maximumnumber of bytes in a air-mems message
 #define FILTER_CHANGE // comment out in order to build without the redundancy check
+#define NUMOSCSENDERS 4
 
 class threadedSerial : public ofThread
 {
@@ -74,9 +77,9 @@ public:
 	void calcKeycode();
 	void calcHeadingTilt();
     
-	void sendOSC();
+	void sendOSC(int ID, bool resetFlags);
     
-	void draw();
+	void calcResetID();
 
 	ofSerial	serial;
 	
@@ -84,12 +87,18 @@ public:
 	string str1;
 	
 	ofTrueTypeFont TTF;
-	ofxOscSender sender;
-    ofxOscMessage m[MAXNUM];
+    
+	ofxOscSender    sender[NUMOSCSENDERS];
+    bool            senderActive[NUMOSCSENDERS];
+    string          sendIP[NUMOSCSENDERS];
+	int             sendport[NUMOSCSENDERS];
+    int             resetID;
+    
+    ofxOscMessage m[DATAFRAMELENGTH]; // static amount of messages in one dataframe
+
 	vector <ofSerialDeviceInfo> deviceList;
 
-    string		sendIP;
-	int			sendport;
+
     
 	string		serialport;
 	int			baudrate;
@@ -139,7 +148,6 @@ public:
 	double		headingOld_x;
 	double		headingOld_y;
   	double		headingLowpassFactor;
-    
     
     long		timestampLeft;
 	long		timestampRight;
@@ -225,6 +233,7 @@ public:
     string      linkQualityAddressLeft;
     string      linkQualityAddressRight;
     string      linkQualityAddressAir;
+    
     bool        drawValues;
 
     int         OSCsendingInterval;
@@ -232,6 +241,8 @@ public:
     long        OSCprevTime;
     int         OSCcounter;
     int         numOSCloops;
+    
+    bool        sendFullFrame;
 };
 
 #endif

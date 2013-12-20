@@ -42,7 +42,6 @@
 #include "ofxOsc.h"
 #include "ofxXmlSettings.h"
 #include "threadedSerial.h"
-#include "threadedOSC.h"
 
 //--------------------------------------------------------
 class sabreServer : public ofSimpleApp
@@ -60,13 +59,7 @@ public:
     
 	void startOSC();
 	void stopOSC();
-    
-    void startOSCfullspeed();
-	void stopOSCfullspeed();
-    
-    void startOSCforSC();
-    void stopOSCforSC();
-	
+
 	void keyReleased(int key);
 
 	void writePrefs();
@@ -89,9 +82,6 @@ public:
 	
 	// class vars
 	threadedSerial	* serialThreadObject;
-    threadedOSC	* OSCThreadObject;
-    threadedOSC	* OSCThreadObject2;
-
 
     ofxOscReceiver receiver;
 	int		receiveport;
@@ -114,7 +104,8 @@ public:
 	
 	bool	prefStatus;
 	string	status1;
-	string	status2;
+	string	status2[NUMOSCSENDERS];
+    int     whichStatus;
 	string	status3;
 	string	tempStr[1024];
 	
