@@ -337,10 +337,12 @@ void threadedSerial::parseLeft()
 			
 			if(calibrate[i]) {
 				if(keys[i].raw < keys[i].minimum){
-					keys[i].minimum = keys[i].raw;
+//					keys[i].minimum = keys[i].raw;
+					keys[i].minimum = (keys[i].raw - CALIBRATEOFFSET);
 				}
 				if(keys[i].raw > keys[i].maximum){
-					keys[i].maximum = keys[i].raw;
+//					keys[i].maximum = keys[i].raw;
+					keys[i].maximum = (keys[i].raw + CALIBRATEOFFSET);
 				}
 				if(keys[i].maximum != keys[i].minimum) {
 					keys[i].scale = 1.0 / (keys[i].maximum - keys[i].minimum);
@@ -447,10 +449,12 @@ void threadedSerial::parseRight()
 			
 			if(calibrate[i]) {
 				if(keys[i].raw < keys[i].minimum){
-					keys[i].minimum = keys[i].raw;
+//					keys[i].minimum = keys[i].raw;
+					keys[i].minimum = (keys[i].raw - CALIBRATEOFFSET);
 				}
 				if(keys[i].raw > keys[i].maximum){
-					keys[i].maximum = keys[i].raw;
+//					keys[i].maximum = keys[i].raw;
+					keys[i].maximum = (keys[i].raw + CALIBRATEOFFSET);
 				}
 				if(keys[i].maximum != keys[i].minimum) {
 					keys[i].scale = 1.0 / (keys[i].maximum - keys[i].minimum);

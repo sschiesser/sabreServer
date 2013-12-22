@@ -12,7 +12,7 @@ YMMV
 1)
     get OF
     
-    download OpenFrameworks 0072  for xcode from:
+    download OpenFrameworks 0080  for xcode from:
 
     http://www.openframeworks.cc/download/
 
@@ -32,7 +32,7 @@ YMMV
 
     in the terminal cd into the new folder 
 
-    your/path/to/of_0072_osx_release/apps/myApps
+    your/path/to/of_v0.8.0_osx_release/apps/myApps
 
     and run the git clone cmd:
 
@@ -48,9 +48,7 @@ a)
     <code>
         void setup( std::string hostname, int port );
     </code>
-	
-    to:
-
+    -> to:
     <code>
         bool setup( std::string hostname, int port );
     </code>
@@ -67,9 +65,7 @@ a)
         	socket = new UdpTransmitSocket( IpEndpointName( hostname.c_str(), port ) );
         }
     </code>
-
-    to:
-
+    -> to:
     <code>
         bool ofxOscSender::setup( std::string hostname, int port )
         {
@@ -85,47 +81,27 @@ a)
             }
         }
     </code>
-	
-	and at the end of the function change:
-	
-	<code>
-		tcsetattr(fd,TCSANOW,&options);
-	 </code>
-	 
-	 to
-	 
-	 <code>
-	if(tcsetattr(fd, TCSAFLUSH, &options) != -1) {
-		ofLog(OF_LOG_NOTICE, "Opened serial line device  %s", portName.c_str());
-	} else {
-		ofLog(OF_LOG_ERROR, "** ERROR ** could not set params to ioctl of device %s", portName.c_str());
-		::close(fd);
-		return false;
-	}
-	</code>
-	
-	and add the return value after:
-	
-	<code>
-		bInited = true;
-		ofLog(OF_LOG_NOTICE,"success in opening serial connection");
-
-    	return true;
-	</code>
 
 
 b)
 
-    in /addons/ofxOsc/libs/oscpack/src/ip/posix change the following header paths in
-    in NetworkingUtils.cpp
-    in UdpSocket.cpp
+	in /addons/ofxOsc/libs/oscpack/src/ip/win32 change the following header paths in
     in NetworkinUtilsWin.cpp
     in UdpSocketWin.cpp
 
     change 
     #include "ip/NetworkingUtils.h"
+    -> to
+    #include "../NetworkingUtils.h"
 
-    to
+
+    in /addons/ofxOsc/libs/oscpack/src/ip/posix change the following header paths in
+    in NetworkingUtils.cpp
+    in UdpSocket.cpp
+
+    change 
+    #include "ip/NetworkingUtils.h"
+    -> to
     #include "../NetworkingUtils.h"
 
     and
@@ -134,8 +110,7 @@ b)
     change
     #include "ip/PacketListener.h"
     #include "ip/TimerListener.h"
-
-    to 
+    -> to 
     #include "../PacketListener.h"
     #include "../TimerListener.h"
 

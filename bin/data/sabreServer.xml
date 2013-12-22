@@ -18,8 +18,8 @@
         <sender id="1">
             <IP>localhost</IP>
             <port>40002</port>
-            <active>1</active>        
-			<!-- activate this OSC sender -->
+            <active>1</active>
+            <!-- activate this OSC sender -->
         </sender>
         <sender id="2">
             <IP>127.0.0.1</IP>
@@ -180,22 +180,22 @@
     <key id="22">
         <oscaddress>/sabre/key/22</oscaddress>
         <invert>0</invert>
-        <minimum>31</minimum>
-        <maximum>993</maximum>
-        <threshold>
+        <!--        <threshold>
             <up>0.80</up>
             <down>0.70</down>
-        </threshold>
+        </threshold> -->
+        <minimum>31</minimum>
+        <maximum>993</maximum>
     </key>
     <key id="23">
         <oscaddress>/sabre/key/23</oscaddress>
         <invert>0</invert>
-        <minimum>28</minimum>
-        <maximum>1000</maximum>
-        <threshold>
+        <!--        <threshold>
             <up>0.80</up>
             <down>0.70</down>
-        </threshold>
+        </threshold> -->
+        <minimum>28</minimum>
+        <maximum>1000</maximum>
     </key>
     <key id="24">
         <oscaddress>/sabre/key/24</oscaddress>
@@ -256,6 +256,8 @@
     </button>
     <air id="0">
         <oscaddress>/sabre/air/pressure</oscaddress>
+        <minimum>0.000000000</minimum>
+        <maximum>120.000000000</maximum>
     </air>
     <air id="1">
         <oscaddress>/sabre/air/temperature</oscaddress>
@@ -269,6 +271,6 @@
     <midinote>
         <oscaddress>/sabre/note</oscaddress>
     </midinote>
-    <serialport>/dev/tty.usbmodem1411</serialport>
+    <serialport>/dev/tty.Bluetooth-PDA-Sync</serialport>
     <display>1</display>
 </sabre>
