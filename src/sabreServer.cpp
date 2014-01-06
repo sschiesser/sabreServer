@@ -41,7 +41,7 @@ void sabreServer::setup()
 {
 	ofSetEscapeQuitsApp(false);
 	ofEnableAlphaBlending();
-	titleString = "sabreServer version 0.91";
+	titleString = "sabreServer version 0.92";
 	
 	serialThreadObject = new(threadedSerial);
 
