@@ -949,9 +949,10 @@ bool sabreServer::readPrefs()
 			bitwidth = 13;			
 		}
 		
-		double rangeVal = pow((double)2.0, (double)bitwidth);
-		serialThreadObject->accelOffset = rangeVal * 0.5;
-		serialThreadObject->accelScale = 1.0 / rangeVal;
+        // v3.5 comm structure
+//		double rangeVal = pow((double)2.0, (double)bitwidth);
+//		serialThreadObject->accelOffset = rangeVal * 0.5;
+//		serialThreadObject->accelScale = 1.0 / rangeVal;
 				
 		numTags = XML.getNumTags("sabre:key");
 		if(numTags > 0) {

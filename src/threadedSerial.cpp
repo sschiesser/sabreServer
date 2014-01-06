@@ -52,9 +52,14 @@ threadedSerial::threadedSerial()
 	scale16 = 1.0 / 65536.0;
 	//	scale32 = 1.0 / 2147483648;
 	
+    // v3.4 comm structure
+//	accelResolution = 4;
+//	accelOffset = 1024;
+//	accelScale = scale11;
+    // v3.5 comm structure
 	accelResolution = 4;
-	accelOffset = 1024;
-	accelScale = scale11;
+	accelOffset = 32768;
+	accelScale = scale16;
 	
 	gyroResolution = 16;
 	gyroOffset = 32768;
@@ -244,25 +249,10 @@ void threadedSerial::serialparse(unsigned char *c)
     }
     
     // v3.5 comm structure
-//    if (serialStream[1][0] == 65) { // packet start marker
-//        if(serialStream[1][1] == 241) { // right hand packet
-//            if(serialStream[1][41] == 90) {
-//                for(i = 0; i < 39; i++) { // collect n-2 bytes into buffer
-//                    input[1][i] = serialStream[1][i+2];
-//                }
-//                haveInput[1] = true;
-//                parseRight();
-//                calcKeycode();
-//                parseIMU();
-//            }
-//        }
-//    }
-    
-    // v3.4 comm structure
     if (serialStream[1][0] == 65) { // packet start marker
         if(serialStream[1][1] == 241) { // right hand packet
-            if(serialStream[1][39] == 90) {
-                for(i = 0; i < 37; i++) { // collect n-2 bytes into buffer
+            if(serialStream[1][41] == 90) {
+                for(i = 0; i < 39; i++) { // collect n-2 bytes into buffer
                     input[1][i] = serialStream[1][i+2];
                 }
                 haveInput[1] = true;
@@ -272,6 +262,21 @@ void threadedSerial::serialparse(unsigned char *c)
             }
         }
     }
+    
+//    // v3.4 comm structure
+//    if (serialStream[1][0] == 65) { // packet start marker
+//        if(serialStream[1][1] == 241) { // right hand packet
+//            if(serialStream[1][39] == 90) {
+//                for(i = 0; i < 37; i++) { // collect n-2 bytes into buffer
+//                    input[1][i] = serialStream[1][i+2];
+//                }
+//                haveInput[1] = true;
+//                parseRight();
+//                calcKeycode();
+//                parseIMU();
+//            }
+//        }
+//    }
     
     if (serialStream[2][0] == 65) { // packet start marker
         if(serialStream[2][1] == 242) { // AirMems packet
@@ -492,15 +497,15 @@ void threadedSerial::parseRight()
 		}
         // IMU parsing is done in separate function() using same input buffer
         
-//        // v3.5 comm structure
-//        batteryLevelRight = input[1][35] & 0xF;
-//        timestampRight = input[1][36] + (input[1][37] << 8);
-//        linkQualityRight  = input[1][38];
+        // v3.5 comm structure
+        batteryLevelRight = input[1][35] & 0xF;
+        timestampRight = input[1][36] + (input[1][37] << 8);
+        linkQualityRight  = input[1][38];
 
-        // v3.4 comm structure
-        batteryLevelRight = input[1][33] & 0xF;
-        timestampRight = input[1][34] + (input[1][35] << 8);
-        linkQualityRight  = input[1][36];
+//        // v3.4 comm structure
+//        batteryLevelRight = input[1][33] & 0xF;
+//        timestampRight = input[1][34] + (input[1][35] << 8);
+//        linkQualityRight  = input[1][36];
      
         systimeR = ofGetElapsedTimeMillis();
         deltaTimeR = systimeR - oldSystimeR;
@@ -514,17 +519,15 @@ void threadedSerial::parseIMU()
 	int i;
 	if(haveInput[1]) {
 		
-        
-        
-//		  // v3.5 comm structure
-//		raw[0] = input[1][29] + (input[1][32] << 8); // accelerometer
-//		raw[1] = input[1][30] + (input[1][33] << 8);
-//		raw[2] = input[1][31] + (input[1][34] << 8);
+		  // v3.5 comm structure
+		raw[0] = input[1][29] + (input[1][32] << 8); // accelerometer
+		raw[1] = input[1][30] + (input[1][33] << 8);
+		raw[2] = input[1][31] + (input[1][34] << 8);
 
-        // v3.4 comm structure
-		raw[0] = input[1][29] + ((input[1][32] & 0xE0) << 3); // accelerometer
-		raw[1] = input[1][30] + ((input[1][32] & 0x1C) << 6);
-		raw[2] = input[1][31] + ((input[1][33] & 0xE0) << 3);
+//        // v3.4 comm structure
+//		raw[0] = input[1][29] + ((input[1][32] & 0xE0) << 3); // accelerometer
+//		raw[1] = input[1][30] + ((input[1][32] & 0x1C) << 6);
+//		raw[2] = input[1][31] + ((input[1][33] & 0xE0) << 3);
         
 
 		raw[3] = input[1][16] + (input[1][20] << 8); // gyroscope
@@ -540,8 +543,13 @@ void threadedSerial::parseIMU()
 		
 		// accelerometer
 		for(i = 0; i < 3; i++) {
-			if( raw[i] >= 1024 ) {
-				raw[i] -= 2047;
+            // v3.4 comm structure
+//			if( raw[i] >= 1024 ) {
+//				raw[i] -= 2047;
+//			}
+            // v3.5 comm structure
+			if( raw[i] >= 32768 ) {
+				raw[i] -= 65535;
 			}
 			rawIMU[i] = raw[i] + accelOffset;
 			IMU[i] = rawIMU[i] * accelScale;
