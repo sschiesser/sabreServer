@@ -343,11 +343,11 @@ void threadedSerial::parseLeft()
 			if(calibrate[i]) {
 				if(keys[i].raw < keys[i].minimum){
 //					keys[i].minimum = keys[i].raw;
-					keys[i].minimum = (keys[i].raw - CALIBRATEOFFSET);
+					keys[i].minimum = (keys[i].raw + CALIBRATEOFFSET);
 				}
 				if(keys[i].raw > keys[i].maximum){
 //					keys[i].maximum = keys[i].raw;
-					keys[i].maximum = (keys[i].raw + CALIBRATEOFFSET);
+					keys[i].maximum = (keys[i].raw - CALIBRATEOFFSET);
 				}
 				if(keys[i].maximum != keys[i].minimum) {
 					keys[i].scale = 1.0 / (keys[i].maximum - keys[i].minimum);
@@ -455,11 +455,11 @@ void threadedSerial::parseRight()
 			if(calibrate[i]) {
 				if(keys[i].raw < keys[i].minimum){
 //					keys[i].minimum = keys[i].raw;
-					keys[i].minimum = (keys[i].raw - CALIBRATEOFFSET);
+					keys[i].minimum = (keys[i].raw + CALIBRATEOFFSET);
 				}
 				if(keys[i].raw > keys[i].maximum){
 //					keys[i].maximum = keys[i].raw;
-					keys[i].maximum = (keys[i].raw + CALIBRATEOFFSET);
+					keys[i].maximum = (keys[i].raw - CALIBRATEOFFSET);
 				}
 				if(keys[i].maximum != keys[i].minimum) {
 					keys[i].scale = 1.0 / (keys[i].maximum - keys[i].minimum);
@@ -711,7 +711,8 @@ void threadedSerial::calcHeadingTilt()
 	by = by * by;
 	
 	heading = atan2(ax, ay) * RAD_TO_DEG;
-	tilt = atan( sqrt(bx + by) ) * RAD_TO_DEG * 10.0;
+	tilt = CLAMP( (atan( sqrt(bx + by) ) * RAD_TO_DEG * 8.0), 0.0, 1.0);
+//	tilt = atan( sqrt(bx + by) ) * RAD_TO_DEG * 10.0;
 	
 }
 

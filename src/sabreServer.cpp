@@ -460,10 +460,11 @@ void sabreServer::draw()
         ofRect(rightColumn + imuColumnLeft, yy-9, 104, 12);
         ofFill();
         ofSetColor(0, 0, 0, 255);
-        ofRect( rightColumn + imuColumnLeft + 52 + (52 * serialThreadObject->tilt), yy-9, 2, 12);
+//        ofRect( rightColumn + imuColumnLeft + 52 + (52 * serialThreadObject->tilt), yy-9, 2, 12);
+        ofRect( rightColumn + imuColumnLeft + (104 * serialThreadObject->tilt), yy-9, 2, 12);
         ofNoFill();
         ofSetColor(91, 91, 91, 255);
-        ofLine(rightColumn+52 + imuColumnLeft, yy-9, rightColumn+52 + imuColumnLeft, yy+4);
+//        ofLine(rightColumn+52 + imuColumnLeft, yy-9, rightColumn+52 + imuColumnLeft, yy+4);
         
         // air
         ofSetColor(0, 0, 0, 255);
