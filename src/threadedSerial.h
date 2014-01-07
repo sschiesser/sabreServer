@@ -54,7 +54,7 @@
 #define PATTERNLENGTH_3 15 // maximumnumber of bytes in a air-mems message
 #define FILTER_CHANGE // comment out in order to build without the redundancy check
 #define NUMOSCSENDERS 4
-#define CALIBRATEOFFSET 10 // value to add/remove to calibrated max/min to avoid key flattering at rest
+#define CALIBRATEOFFSET 15 // value to add/remove to calibrated max/min to avoid key flattering at rest
 
 class threadedSerial : public ofThread
 {

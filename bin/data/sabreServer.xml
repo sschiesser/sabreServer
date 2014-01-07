@@ -9,7 +9,7 @@
     <framerate>10</framerate>
     <!-- display framerate -->
     <OSCsender>
-        <interval>5</interval>
+        <interval>2</interval>
         <!-- OSC sending interval -->
         <sendRawValues>0</sendRawValues>
         <!-- include raw values in OSC stream -->
@@ -29,12 +29,12 @@
         <sender id="3">
             <IP>127.0.0.1</IP>
             <port>40003</port>
-            <active>0</active>
+            <active>1</active>
         </sender>
         <sender id="4">
             <IP>127.0.0.1</IP>
             <port>40004</port>
-            <active>0</active>
+            <active>1</active>
         </sender>
         <receiver>
             <port>41003</port>
@@ -156,8 +156,8 @@
     <key id="18">
         <oscaddress>/sabre/key/18</oscaddress>
         <invert>0</invert>
-        <minimum>369</minimum>
-        <maximum>486</maximum>
+        <minimum>280</minimum>
+        <maximum>454</maximum>
     </key>
     <key id="19">
         <oscaddress>/sabre/key/19</oscaddress>
@@ -256,8 +256,8 @@
     </button>
     <air id="0">
         <oscaddress>/sabre/air/pressure</oscaddress>
-        <minimum>-116.247500000</minimum>
-        <maximum>44.752500000</maximum>
+        <minimum>0.000000000</minimum>
+        <maximum>120.000000000</maximum>
     </air>
     <air id="1">
         <oscaddress>/sabre/air/temperature</oscaddress>
@@ -271,6 +271,6 @@
     <midinote>
         <oscaddress>/sabre/note</oscaddress>
     </midinote>
+    <serialport>/dev/tty.usbmodemfa131</serialport>
     <display>1</display>
-    <serialport>/dev/tty.usbmodemfd121</serialport>
 </sabre>

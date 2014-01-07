@@ -256,6 +256,7 @@ void threadedSerial::serialparse(unsigned char *c)
                     input[1][i] = serialStream[1][i+2];
                 }
                 haveInput[1] = true;
+//                printf("input[1][35] = %x\n", input[1][35]);
                 parseRight();
                 calcKeycode();
                 parseIMU();
@@ -386,8 +387,8 @@ void threadedSerial::parseLeft()
 		}
         
 		button[1] = (input[0][16] & 0x8) >> 3;
-		button[2] = (input[0][16] & 0x10) >> 4;
-		button[0] = (input[0][16] & 0x20) >> 5;
+		button[0] = (input[0][16] & 0x10) >> 4;
+		button[2] = (input[0][16] & 0x20) >> 5;
 		
 		for(int i = 0; i < 3; i++) {
 			if(button[i] != buttonOld[i]) {
@@ -499,6 +500,7 @@ void threadedSerial::parseRight()
         
         // v3.5 comm structure
         batteryLevelRight = input[1][35] & 0xF;
+//        printf("batteryLevelRight = %x\n", batteryLevelRight);
         timestampRight = input[1][36] + (input[1][37] << 8);
         linkQualityRight  = input[1][38];
 

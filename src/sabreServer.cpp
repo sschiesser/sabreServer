@@ -512,9 +512,9 @@ void sabreServer::draw()
         ofSetColor(0, 0, 0, 255);
         //			yy = anchory+((35) * stepsize);
         yy = anchory+((12) * stepsize);
-        TTF.drawString( ofToString(serialThreadObject->button[2], 1), midColumn + 10 + imuColumnLeft, yy );
+        TTF.drawString( ofToString(serialThreadObject->button[0], 1), midColumn + 10 + imuColumnLeft, yy );
         TTF.drawString( ofToString(serialThreadObject->button[1], 1), midColumn + 10 + 12 + imuColumnLeft, yy );
-        TTF.drawString( ofToString(serialThreadObject->button[0], 1), midColumn + 10 + 24 + imuColumnLeft, yy );
+        TTF.drawString( ofToString(serialThreadObject->button[2], 1), midColumn + 10 + 24 + imuColumnLeft, yy );
         
         ofNoFill();
         ofSetColor(91, 91, 91, 255);
@@ -524,13 +524,13 @@ void sabreServer::draw()
         
         ofFill();
         ofSetColor(0, 0, 0, 255);
-        if(serialThreadObject->button[2]) {
+        if(serialThreadObject->button[0]) {
             ofRect(rightColumn + imuColumnLeft + 2, yy-6, 7, 7);
         }
         if(serialThreadObject->button[1]) {
             ofRect(rightColumn + imuColumnLeft + 16, yy-6, 7, 7);
         }
-        if(serialThreadObject->button[0]) {
+        if(serialThreadObject->button[2]) {
             ofRect(rightColumn + imuColumnLeft + 30, yy-6, 7, 7);
         }
         
