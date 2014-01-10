@@ -386,8 +386,8 @@ void threadedSerial::parseLeft()
 #endif
 		}
         
-		button[1] = (input[0][16] & 0x8) >> 3;
-		button[0] = (input[0][16] & 0x10) >> 4;
+		button[0] = (input[0][16] & 0x8) >> 3;
+		button[1] = (input[0][16] & 0x10) >> 4;
 		button[2] = (input[0][16] & 0x20) >> 5;
 		
 		for(int i = 0; i < 3; i++) {
