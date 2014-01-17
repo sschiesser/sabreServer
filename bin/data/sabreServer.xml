@@ -25,16 +25,18 @@
             <IP>127.0.0.1</IP>
             <port>57120</port>
             <active>1</active>
+            <mode>16</mode>
+            <!-- change the OSC sending mode -->
         </sender>
         <sender id="3">
             <IP>127.0.0.1</IP>
             <port>40003</port>
-            <active>1</active>
+            <active>0</active>
         </sender>
         <sender id="4">
             <IP>127.0.0.1</IP>
             <port>40004</port>
-            <active>1</active>
+            <active>0</active>
         </sender>
         <receiver>
             <port>41003</port>

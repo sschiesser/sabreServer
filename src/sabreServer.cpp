@@ -66,6 +66,7 @@ void sabreServer::setup()
         serialThreadObject->sendIP[i] = "127.0.0.1";
         serialThreadObject->sendport[i] = 40002+i;
         serialThreadObject->senderActive[i] = false;
+        serialThreadObject->senderMode[i] = 1;
     }
 
 	status = readPrefs();	
@@ -910,6 +911,7 @@ bool sabreServer::readPrefs()
                     serialThreadObject->sendIP[ID] = XML.getValue("sender:IP", "127.0.0.1", i);
                     serialThreadObject->sendport[ID] = XML.getValue("sender:port", 40002+ID, i);
                     serialThreadObject->senderActive[ID] = XML.getValue("sender:active", 0, i);
+                    serialThreadObject->senderMode[ID] = XML.getValue("sender:mode", 1, i);
 				}
 			}
             XML.popTag();
@@ -1084,18 +1086,22 @@ void sabreServer::dumpPrefs()
 	printf("sender 1 IP %s\n", serialThreadObject->sendIP[0].c_str());
 	printf("sender 1 port %d\n", serialThreadObject->sendport[0]);
 	printf("sender 1 active %d\n", serialThreadObject->senderActive[0]);
+	printf("sender 1 mode %d\n", serialThreadObject->senderMode[0]);
 
     printf("sender 2 IP %s\n", serialThreadObject->sendIP[1].c_str());
 	printf("sender 2 port %d\n", serialThreadObject->sendport[1]);
 	printf("sender 2 active %d\n", serialThreadObject->senderActive[1]);
+	printf("sender 2 mode %d\n", serialThreadObject->senderMode[1]);
     
     printf("sender 3 IP %s\n", serialThreadObject->sendIP[2].c_str());
 	printf("sender 3 port %d\n", serialThreadObject->sendport[2]);
 	printf("sender 3 active %d\n", serialThreadObject->senderActive[2]);
+	printf("sender 3 mode %d\n", serialThreadObject->senderMode[2]);
     
     printf("sender 4 IP %s\n", serialThreadObject->sendIP[3].c_str());
 	printf("sender 4 port %d\n", serialThreadObject->sendport[3]);
 	printf("sender 4 active %d\n", serialThreadObject->senderActive[3]);
+	printf("sender 4 mode %d\n", serialThreadObject->senderMode[3]);
     
 	printf("receive port %d\n", receiveport);
 	printf("baudrate %d\n", serialThreadObject->baudrate);
@@ -1162,7 +1168,6 @@ void sabreServer::writePrefs()
     // only store GUI changeable control parameters:
 	XML.setValue("sabre:display",					display);
 	XML.setValue("sabre:serialport",				serialThreadObject->serialport);
-
 	XML.saveFile("sabreServer.xml");
 	return;
 }

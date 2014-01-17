@@ -722,223 +722,248 @@ void threadedSerial::sendOSC(int ID, bool resetFlags)
 {
     int i, j;
     
+    // The standard mode
+    
+    if( (senderMode[ID] & 1) == 1) {
 // Keys ------------------------
     
-    systemTimestamp = ofGetElapsedTimeMillis();
+        systemTimestamp = ofGetElapsedTimeMillis();
 
-    if(sendFullFrame) {
-        m[0].clear();
-        m[0].setAddress( "/sabre/dataframe" ); // timestamp server
-        m[0].addStringArg( "begin" );
-        sender[ID].sendMessage( m[0] );
-    }
+        if(sendFullFrame) {
+            m[0].clear();
+            m[0].setAddress( "/sabre/dataframe" ); // timestamp server
+            m[0].addStringArg( "begin" );
+            sender[ID].sendMessage( m[0] );
+        }
 
-    m[1].clear();
-    m[1].setAddress( timestampAddressServer ); // timestamp server
-    m[1].addIntArg( deltaTimeL );
-    m[1].addIntArg( deltaTimeR );
-    m[1].addIntArg( systemTimestamp );
-    
-    m[2].clear();
-    m[2].setAddress( timestampAddressLeft ); // timestamp Left
-    m[2].addIntArg( timestampLeft );
+        m[1].clear();
+        m[1].setAddress( timestampAddressServer ); // timestamp server
+        m[1].addIntArg( deltaTimeL );
+        m[1].addIntArg( deltaTimeR );
+        m[1].addIntArg( systemTimestamp );
         
-    m[3].clear();
-    m[3].setAddress( timestampAddressRight ); // timestamp Right
-    m[3].addIntArg( timestampRight );
-    
-    m[4].clear();
-    m[4].setAddress( timestampAddressAir ); // timestamp
-    m[4].addIntArg( timestampAir );
-    
-    m[5].clear();
-    m[5].setAddress( airaddresses[0] ); // air pressure
-    m[5].addFloatArg( airValue.continuous);
-    
-    
-    m[6].clear();
-    m[6].setAddress( airaddresses[1] ); // air temperature
-    m[6].addFloatArg( air[1]);
-    
-    // send first batch
-    
-    for(i = 1; i < 7; i++) {
-        sender[ID].sendMessage( m[i] );
-    }
-
-    if(keycodeChanged) { // keycode
-        m[7].clear();
-        m[7].setAddress( keycodeaddress );
-        m[7].addIntArg( keycode );
+        m[2].clear();
+        m[2].setAddress( timestampAddressLeft ); // timestamp Left
+        m[2].addIntArg( timestampLeft );
+            
+        m[3].clear();
+        m[3].setAddress( timestampAddressRight ); // timestamp Right
+        m[3].addIntArg( timestampRight );
         
-        sender[ID].sendMessage( m[7] );
-        if(resetFlags) {
-            keycodeChanged = false;
+        m[4].clear();
+        m[4].setAddress( timestampAddressAir ); // timestamp
+        m[4].addIntArg( timestampAir );
+        
+        m[5].clear();
+        m[5].setAddress( airaddresses[0] ); // air pressure
+        m[5].addFloatArg( airValue.continuous);
+        
+        
+        m[6].clear();
+        m[6].setAddress( airaddresses[1] ); // air temperature
+        m[6].addFloatArg( air[1]);
+        
+        // send first batch
+        
+        for(i = 1; i < 7; i++) {
+            sender[ID].sendMessage( m[i] );
         }
-        if(validMidiNote) {
-            m[8].clear();	// midinote derived from keycode
-            m[8].setAddress( midinoteaddress );
-            m[8].addIntArg( midinote );
+
+        if(keycodeChanged) { // keycode
+            m[7].clear();
+            m[7].setAddress( keycodeaddress );
+            m[7].addIntArg( keycode );
             
-            sender[ID].sendMessage( m[8] );
-        }
-    }
-    
-    for(i = 9, j = 2; i < 12; i++, j--) { // buttons
-        if(buttonChanged[j]) {
-            m[i].clear();
-            m[i].setAddress( buttonaddresses[j] );
-            m[i].addIntArg( button[j] );
+            sender[ID].sendMessage( m[7] );
             if(resetFlags) {
-                buttonChanged[j] = false;
+                keycodeChanged = false;
             }
-            sender[ID].sendMessage( m[i] );
-        }
-    }
-    
-    for(i = 12, j = 0; i < 37; i++, j++) { // binary key values
-        if(keys[j].binaryChanged) {
-            m[i].clear();
-            m[i].setAddress( keys[j].oscaddress+"/down");
-            m[i].addIntArg( keys[j].binary );
-            if(resetFlags) {
-                keys[j].binaryChanged = false;
+            if(validMidiNote) {
+                m[8].clear();	// midinote derived from keycode
+                m[8].setAddress( midinoteaddress );
+                m[8].addIntArg( midinote );
+                
+                sender[ID].sendMessage( m[8] );
             }
-            sender[ID].sendMessage( m[i] );
-            
         }
-    }
-    
-    for(i = 37, j = 0; i < 62; i++, j++) { // continuous key values
-        if(keys[j].changed) {
-            m[i].clear();
-            m[i].setAddress( keys[j].oscaddress+"/continuous");
-            m[i].addFloatArg( keys[j].continuous );
-            if(!sendRawValues && resetFlags) {
-                keys[j].changed = false;
-            }
-            
-            sender[ID].sendMessage( m[i] );
-        }
-    }
-    
-    if(sendRawValues) {
-        for(i = 62, j = 0; i < 87; i++, j++) { // raw key values
-            if(keys[j].changed) {
+        
+        for(i = 9, j = 2; i < 12; i++, j--) { // buttons
+            if(buttonChanged[j]) {
                 m[i].clear();
-                m[i].setAddress( keys[j].oscaddress+"/raw");
-                m[i].addIntArg( keys[j].raw );
+                m[i].setAddress( buttonaddresses[j] );
+                m[i].addIntArg( button[j] );
                 if(resetFlags) {
-                    keys[j].changed = false;
+                    buttonChanged[j] = false;
                 }
                 sender[ID].sendMessage( m[i] );
             }
         }
-    }
+        
+        for(i = 12, j = 0; i < 37; i++, j++) { // binary key values
+            if(keys[j].binaryChanged) {
+                m[i].clear();
+                m[i].setAddress( keys[j].oscaddress+"/down");
+                m[i].addIntArg( keys[j].binary );
+                if(resetFlags) {
+                    keys[j].binaryChanged = false;
+                }
+                sender[ID].sendMessage( m[i] );
+                
+            }
+        }
+        
+        for(i = 37, j = 0; i < 62; i++, j++) { // continuous key values
+            if(keys[j].changed) {
+                m[i].clear();
+                m[i].setAddress( keys[j].oscaddress+"/continuous");
+                m[i].addFloatArg( keys[j].continuous );
+                if(!sendRawValues && resetFlags) {
+                    keys[j].changed = false;
+                }
+                
+                sender[ID].sendMessage( m[i] );
+            }
+        }
+        
+        if(sendRawValues) {
+            for(i = 62, j = 0; i < 87; i++, j++) { // raw key values
+                if(keys[j].changed) {
+                    m[i].clear();
+                    m[i].setAddress( keys[j].oscaddress+"/raw");
+                    m[i].addIntArg( keys[j].raw );
+                    if(resetFlags) {
+                        keys[j].changed = false;
+                    }
+                    sender[ID].sendMessage( m[i] );
+                }
+            }
+        }
 
-// IMU ------------------------
+    // IMU ------------------------
 
-    m[87].clear();
-    m[87].setAddress( imuaddresses[0] ); // IMU accelero scaled
-    m[87].addFloatArg( IMU[0] );
-    m[87].addFloatArg( IMU[1] );
-    m[87].addFloatArg( IMU[2] );
-    
-    m[88].clear();
-    m[88].setAddress( imuaddresses[1] ); // IMU gyro scaled
-    m[88].addFloatArg( IMU[3] );
-    m[88].addFloatArg( IMU[4] );
-    m[88].addFloatArg( IMU[5] );
-    
-    m[89].clear();
-    m[89].setAddress( imuaddresses[2] ); // IMU magneto scaled
-    m[89].addFloatArg( IMU[6] );
-    m[89].addFloatArg( IMU[7] );
-    m[89].addFloatArg( IMU[8] );
-    
-    m[90].clear();
-    m[90].setAddress( imuaddresses[6] ); // IMU accelero summed
-    m[90].addFloatArg( summedIMU[0] );
-    
-    m[91].clear();
-    m[91].setAddress( imuaddresses[7] ); // IMU gyro summed
-    m[91].addFloatArg( summedIMU[1] );
-    
-    m[92].clear();
-    m[92].setAddress( imuaddresses[8] ); // IMU magneto summed
-    m[92].addFloatArg( summedIMU[2] );
-    
-    m[93].clear();
-    m[93].setAddress( imuaddresses[10] ); // IMU heading from accelerometer
-    m[93].addFloatArg( heading );
-    
-    m[94].clear();
-    m[94].setAddress( imuaddresses[11] ); // IMU tilt from accelerometer
-    m[94].addFloatArg( tilt );
-    
-    m[95].clear();
-    m[95].setAddress( imuaddresses[9] ); // IMU temperature in degreee celsius
-    m[95].addFloatArg( IMU[9] );
-    
-    for(i = 87; i < 96; i++) {
-        sender[ID].sendMessage( m[i] );
-    }
-    
-    if(sendRawValues) {
-        m[96].clear();
-        m[96].setAddress( imuaddresses[3] ); // IMU accelero raw
-        m[96].addFloatArg( rawIMU[0] );
-        m[96].addFloatArg( rawIMU[1] );
-        m[96].addFloatArg( rawIMU[2] );
+        m[87].clear();
+        m[87].setAddress( imuaddresses[0] ); // IMU accelero scaled
+        m[87].addFloatArg( IMU[0] );
+        m[87].addFloatArg( IMU[1] );
+        m[87].addFloatArg( IMU[2] );
         
-        m[97].clear();
-        m[97].setAddress( imuaddresses[4] ); // IMU gyro raw
-        m[97].addFloatArg( rawIMU[3] );
-        m[97].addFloatArg( rawIMU[4] );
-        m[97].addFloatArg( rawIMU[5] );
+        m[88].clear();
+        m[88].setAddress( imuaddresses[1] ); // IMU gyro scaled
+        m[88].addFloatArg( IMU[3] );
+        m[88].addFloatArg( IMU[4] );
+        m[88].addFloatArg( IMU[5] );
         
-        m[98].clear();
-        m[98].setAddress( imuaddresses[5] ); // IMU magneto raw
-        m[98].addFloatArg( rawIMU[6] );
-        m[98].addFloatArg( rawIMU[7] );
-        m[98].addFloatArg( rawIMU[8] );
+        m[89].clear();
+        m[89].setAddress( imuaddresses[2] ); // IMU magneto scaled
+        m[89].addFloatArg( IMU[6] );
+        m[89].addFloatArg( IMU[7] );
+        m[89].addFloatArg( IMU[8] );
         
-        for(i = 96; i < 99; i++) {
+        m[90].clear();
+        m[90].setAddress( imuaddresses[6] ); // IMU accelero summed
+        m[90].addFloatArg( summedIMU[0] );
+        
+        m[91].clear();
+        m[91].setAddress( imuaddresses[7] ); // IMU gyro summed
+        m[91].addFloatArg( summedIMU[1] );
+        
+        m[92].clear();
+        m[92].setAddress( imuaddresses[8] ); // IMU magneto summed
+        m[92].addFloatArg( summedIMU[2] );
+        
+        m[93].clear();
+        m[93].setAddress( imuaddresses[10] ); // IMU heading from accelerometer
+        m[93].addFloatArg( heading );
+        
+        m[94].clear();
+        m[94].setAddress( imuaddresses[11] ); // IMU tilt from accelerometer
+        m[94].addFloatArg( tilt );
+        
+        m[95].clear();
+        m[95].setAddress( imuaddresses[9] ); // IMU temperature in degreee celsius
+        m[95].addFloatArg( IMU[9] );
+        
+        for(i = 87; i < 96; i++) {
             sender[ID].sendMessage( m[i] );
+        }
+        
+        if(sendRawValues) {
+            m[96].clear();
+            m[96].setAddress( imuaddresses[3] ); // IMU accelero raw
+            m[96].addFloatArg( rawIMU[0] );
+            m[96].addFloatArg( rawIMU[1] );
+            m[96].addFloatArg( rawIMU[2] );
+            
+            m[97].clear();
+            m[97].setAddress( imuaddresses[4] ); // IMU gyro raw
+            m[97].addFloatArg( rawIMU[3] );
+            m[97].addFloatArg( rawIMU[4] );
+            m[97].addFloatArg( rawIMU[5] );
+            
+            m[98].clear();
+            m[98].setAddress( imuaddresses[5] ); // IMU magneto raw
+            m[98].addFloatArg( rawIMU[6] );
+            m[98].addFloatArg( rawIMU[7] );
+            m[98].addFloatArg( rawIMU[8] );
+            
+            for(i = 96; i < 99; i++) {
+                sender[ID].sendMessage( m[i] );
+            }
+        }
+        
+        m[99].clear();
+        m[99].setAddress( batteryAddressAir ); // air battery
+        m[99].addIntArg( batteryLevelAir);
+        
+        m[100].clear();
+        m[100].setAddress( linkQualityAddressAir ); // air link quality
+        m[100].addIntArg( linkQualityAir);
+
+        m[101].clear();
+        m[101].setAddress( linkQualityAddressLeft ); // left link quality
+        m[101].addIntArg( linkQualityLeft );
+        
+        m[102].clear();
+        m[102].setAddress( linkQualityAddressRight ); // right link quality
+        m[102].addIntArg( linkQualityRight );
+        
+        m[103].clear();
+        m[103].setAddress( batteryAddressMain ); // battery level main
+        m[103].addIntArg( batteryLevelRight );
+        
+        for(i = 99; i < 104; i++) {
+            sender[ID].sendMessage( m[i] );
+        }
+        
+        if(sendFullFrame) {
+            m[104].clear();
+            m[104].setAddress( "/sabre/dataframe" ); // timestamp server
+            m[104].addStringArg( "end" );
+            sender[ID].sendMessage( m[104] );
         }
     }
     
-    m[99].clear();
-    m[99].setAddress( batteryAddressAir ); // air battery
-    m[99].addIntArg( batteryLevelAir);
-    
-    m[100].clear();
-    m[100].setAddress( linkQualityAddressAir ); // air link quality
-    m[100].addIntArg( linkQualityAir);
+    // Gerhard Eckels direct SC-server Mode
+    if( ((senderMode[ID] >> 4) & 1) == 1){
+        
+        m[0].clear();
+        m[0].setAddress( "/c_setn" ); // SC server command
+        m[0].addIntArg( 0 ); // SC server Bus Nr.
+        m[0].addIntArg( 26 ); // SC server NumArgs
 
-    m[101].clear();
-    m[101].setAddress( linkQualityAddressLeft ); // left link quality
-    m[101].addIntArg( linkQualityLeft );
-    
-    m[102].clear();
-    m[102].setAddress( linkQualityAddressRight ); // right link quality
-    m[102].addIntArg( linkQualityRight );
-    
-    m[103].clear();
-    m[103].setAddress( batteryAddressMain ); // battery level main
-    m[103].addIntArg( batteryLevelRight );
-    
-    for(i = 99; i < 104; i++) {
-        sender[ID].sendMessage( m[i] );
+        if(sendRawValues == 0){
+            m[0].addFloatArg( airValue.continuous);
+            for(i = 0; i < 25; i++){
+                m[0].addFloatArg( keys[i].continuous );
+            }
+        }else if(sendRawValues == 1){
+            m[0].addFloatArg( airValue.relative);
+            for(i = 0; i < 25; i++){
+                m[0].addIntArg( keys[i].raw );
+            }
+        }
+        sender[ID].sendMessage( m[0] );
     }
-    
-    if(sendFullFrame) {
-        m[104].clear();
-        m[104].setAddress( "/sabre/dataframe" ); // timestamp server
-        m[104].addStringArg( "end" );
-        sender[ID].sendMessage( m[104] );
-    }
-    
     return;
 }
 

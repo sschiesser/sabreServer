@@ -91,6 +91,7 @@ public:
     
 	ofxOscSender    sender[NUMOSCSENDERS];
     bool            senderActive[NUMOSCSENDERS];
+    int             senderMode[NUMOSCSENDERS];
     string          sendIP[NUMOSCSENDERS];
 	int             sendport[NUMOSCSENDERS];
     int             resetID;
