@@ -932,6 +932,17 @@ bool sabreServer::readPrefs()
         
         serialThreadObject->sendRawValues = XML.getValue("sabre:OSCsender:sendRawValues", 0);
         serialThreadObject->OSCsendingInterval = XML.getValue("sabre:OSCsender:interval", 10);
+        
+        /*
+         * ! Warning: if interval < 4 ms, serial port will jam at currently maximum speed (230400 bps)
+         */
+        if(serialThreadObject->OSCsendingInterval < 4) {
+            serialThreadObject->OSCsendingInterval = 4;
+        }
+        /*
+         * ! Warning
+         */
+        
         serialThreadObject->numOSCloops = serialThreadObject->OSCsendingInterval * 2;
 
 		for(i = 0; i < MAXNUM; i++) {
