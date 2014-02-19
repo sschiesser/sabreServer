@@ -9,7 +9,7 @@
     <framerate>10</framerate>
     <!-- display framerate -->
     <OSCsender>
-        <interval>10</interval>
+        <interval>4</interval>
         <!-- OSC sending interval -->
         <sendRawValues>1</sendRawValues>
         <!-- include raw values in OSC stream -->
@@ -273,6 +273,6 @@
     <midinote>
         <oscaddress>/sabre/note</oscaddress>
     </midinote>
-    <serialport>/dev/tty.usbmodemfa131</serialport>
+    <serialport>/dev/tty.usbmodemfd1211</serialport>
     <display>1</display>
 </sabre>

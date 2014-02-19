@@ -36,6 +36,8 @@
  */
 
 #include "threadedSerial.h"
+#include <stdio.h>
+#include <string.h>
 
 threadedSerial::threadedSerial()
 {
@@ -149,7 +151,8 @@ threadedSerial::threadedSerial()
     
     senderActive[0] = true;
     sendFullFrame = false; // TODO
-        
+    
+    dBuffer.clear();
 }
 
 threadedSerial::~threadedSerial()
@@ -165,15 +168,20 @@ threadedSerial::~threadedSerial()
 
 void threadedSerial::start()
 {
-	startThread(true, false);   // blocking, verbose
+    startThread(true, false);   // blocking, verbose
     serial.flush(true, true);
-
 }
 
 void threadedSerial::stop()
 {
 	stopThread();
     serial.flush(true, true);
+    
+//    ofFile dFile(ofToDataPath("/Users/itz/ICSTdocs/research/SABRe/evaluations/latency_measurement/serial2OSC/140208_latency.dat"), ofFile::WriteOnly);
+//    dFile.create();
+//    dFile.writeFromBuffer(dBuffer);
+//    dBuffer.clear();
+//    dFile.close();
 }
 
 //--------------------------
@@ -224,7 +232,9 @@ void threadedSerial::serialparse(unsigned char *c)
 {
 	int i, j;
 	long sum;
+    char tempBuf[20];
 	
+    dParserStartT = ofGetElapsedTimeMicros();
     // do the circular buffer thing three times independently
     for (j = 0; j < 3; j++) {
         // push bytes forward in the three circular buffers "serialStream[j]"
@@ -233,6 +243,8 @@ void threadedSerial::serialparse(unsigned char *c)
         }
         serialStream[j][streamSize[j]-1] = c[0]; // append new byte to each serialStream[j] buffer
     }
+    dParserStopT = ofGetElapsedTimeMicros();
+    dParserSum += (dParserStopT - dParserStartT);
 
 	// pattern matching
 	if (serialStream[0][0] == 65) { // packet start marker
@@ -241,6 +253,15 @@ void threadedSerial::serialparse(unsigned char *c)
                 for(i = 0; i < 20; i++) { // collect n-2 bytes into buffer
                     input[0][i] = serialStream[0][i+2];
                 }
+                
+                printf("LEFT - serial parsing time: %lld us\n", dParserSum);
+                dBuffer.append("LEFT; ");
+                sprintf(tempBuf, "%lld", dParserSum);
+                dBuffer.append(tempBuf);
+                dBuffer.append("; ");
+                dParserSum = 0;
+                dLhStartT = ofGetElapsedTimeMicros();
+                dLhParsing = true;
                 haveInput[0] = true;
                 parseLeft();
                 calcKeycode();
@@ -255,6 +276,14 @@ void threadedSerial::serialparse(unsigned char *c)
                 for(i = 0; i < 39; i++) { // collect n-2 bytes into buffer
                     input[1][i] = serialStream[1][i+2];
                 }
+                printf("RIGHT - serial parsing time: %lld us\n", dParserSum);
+                dBuffer.append("RIGHT; ");
+                sprintf(tempBuf, "%lld", dParserSum);
+                dBuffer.append(tempBuf);
+                dBuffer.append("; ");
+                dParserSum = 0;
+                dRhStartT = ofGetElapsedTimeMicros();
+                dRhParsing = true;
                 haveInput[1] = true;
 //                printf("input[1][35] = %x\n", input[1][35]);
                 parseRight();
@@ -285,6 +314,14 @@ void threadedSerial::serialparse(unsigned char *c)
                 for(i = 0; i < 12; i++) { // collect n-2 bytes into buffer
                     input[2][i] = serialStream[2][i+2];
                 }
+                printf("AM - serial parsing time: %lld us\n", dParserSum);
+                dBuffer.append("airMEMS; ");
+                sprintf(tempBuf, "%lld", dParserSum);
+                dBuffer.append(tempBuf);
+                dBuffer.append("; ");
+                dParserSum = 0;
+                dAmStartT = ofGetElapsedTimeMicros();
+                dAmParsing = true;
                 haveInput[2] = true;
                 parseAir();
            }
@@ -721,6 +758,7 @@ void threadedSerial::calcHeadingTilt()
 void threadedSerial::sendOSC(int ID, bool resetFlags)
 {
     int i, j;
+    char tempBuf[20];
     
     // The standard mode
     
@@ -964,6 +1002,38 @@ void threadedSerial::sendOSC(int ID, bool resetFlags)
         }
         sender[ID].sendMessage( m[0] );
     }
+    
+    if(dLhParsing) {
+        dLhStopT = ofGetElapsedTimeMicros();
+        printf("LH time: %01.03f ms\n\n", ((float)(dLhStopT - dLhStartT)/1000));
+        sprintf(tempBuf, "%lld", (dLhStopT-dLhStartT));
+        dBuffer.append(tempBuf);
+        dBuffer.append(";\n");
+        dLhStartT = 0;
+        dLhStopT = 0;
+        dLhParsing = false;
+    }
+    if(dRhParsing) {
+        dRhStopT = ofGetElapsedTimeMicros();
+        printf("RH time: %01.03f ms\n\n", ((float)(dRhStopT - dRhStartT)/1000));
+        sprintf(tempBuf, "%lld", (dRhStopT-dRhStartT));
+        dBuffer.append(tempBuf);
+        dBuffer.append(";\n");
+        dRhStartT = 0;
+        dRhStopT = 0;
+        dRhParsing = false;
+    }
+    if(dAmParsing) {
+        dAmStopT = ofGetElapsedTimeMicros();
+        printf("aM time: %01.03f ms\n\n", ((float)(dAmStopT - dAmStartT)/1000));
+        sprintf(tempBuf, "%lld", (dAmStopT-dAmStartT));
+        dBuffer.append(tempBuf);
+        dBuffer.append(";\n");
+        dAmStartT = 0;
+        dAmStopT = 0;
+        dAmParsing = false;
+    }
+    
     return;
 }
 

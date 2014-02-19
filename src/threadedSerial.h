@@ -42,6 +42,7 @@
 #include "ofxXmlSettings.h"
 #include "ofxOsc.h"
 
+
 #include "sabreKeys.h"
 #include "sabreMidiNote.h"
 #include "sabreAir.h"
@@ -245,6 +246,14 @@ public:
     int         numOSCloops;
     
     bool        sendFullFrame;
+    
+    // debug variables
+    bool dLhParsing, dRhParsing, dAmParsing;
+    unsigned long long dParserStartT, dParserStopT, dParserSum;
+    unsigned long long dLhStartT, dLhStopT;
+    unsigned long long dRhStartT, dRhStopT;
+    unsigned long long dAmStartT, dAmStopT;
+    ofBuffer dBuffer;
 };
 
 #endif
