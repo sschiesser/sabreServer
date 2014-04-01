@@ -41,7 +41,7 @@ void sabreServer::setup()
 {
 	ofSetEscapeQuitsApp(false);
 	ofEnableAlphaBlending();
-	titleString = "sabreServer version 0.94";
+	titleString = "sabreServer version 0.95b";
 	
 	serialThreadObject = new(threadedSerial);
 
@@ -1007,6 +1007,26 @@ bool sabreServer::readPrefs()
 					}
 				}
 			}
+            
+            serialThreadObject->raw[0] = 0;
+            serialThreadObject->IMU[0] = 0.0f;
+            serialThreadObject->raw[1] = 0;
+            serialThreadObject->IMU[1] = 0.0f;
+            serialThreadObject->raw[2] = 0;
+            serialThreadObject->IMU[2] = 0.0f;
+            serialThreadObject->raw[3] = 0;
+            serialThreadObject->IMU[3] = 0.0f;
+            serialThreadObject->raw[4] = 0;
+            serialThreadObject->IMU[4] = 0.0f;
+            serialThreadObject->raw[5] = 0;
+            serialThreadObject->IMU[5] = 0.0f;
+            serialThreadObject->raw[6] = 0;
+            serialThreadObject->IMU[6] = 0.0f;
+            serialThreadObject->raw[7] = 0;
+            serialThreadObject->IMU[7] = 0.0f;
+            serialThreadObject->raw[8] = 0;
+            serialThreadObject->IMU[8] = 0.0f;
+
 			
 			serialThreadObject->numButtonAddr = numPtTags = XML.getNumTags("button");
 			if(numPtTags > 0) {
