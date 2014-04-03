@@ -423,8 +423,15 @@ void threadedSerial::parseLeft()
 #endif
 		}
         
-		button[0] = (input[0][16] & 0x8) >> 3;
-		button[1] = (input[0][16] & 0x10) >> 4;
+        // !! INSTRUMENT #1 (Graz) !!
+		button[1] = (input[0][16] & 0x8) >> 3;
+		button[0] = (input[0][16] & 0x10) >> 4;
+        
+        // !! INSTRUMENT #2 (Matthias) !!
+//        button[0] = (input[0][16] & 0x8) >> 3;
+//		button[1] = (input[0][16] & 0x10) >> 4;
+        
+        // common...
 		button[2] = (input[0][16] & 0x20) >> 5;
 		
 		for(int i = 0; i < 3; i++) {

@@ -274,5 +274,5 @@
         <oscaddress>/sabre/note</oscaddress>
     </midinote>
     <display>1</display>
-    <serialport>/dev/tty.usbmodemfd121</serialport>
+    <serialport>/dev/tty.usbmodemfa13421</serialport>
 </sabre>
