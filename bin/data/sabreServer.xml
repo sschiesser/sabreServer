@@ -5,7 +5,7 @@
 	<baudrate>115200</baudrate> -->
     <!-- comment this to change to receiver-->
     <!-- <serialport>/dev/tty.usbserial-A600dJ1Z</serialport> -->
-    <baudrate>230400</baudrate>
+    <!--<baudrate>230400</baudrate> -->
     <framerate>10</framerate>
     <!-- display framerate -->
     <OSCsender>
