@@ -3,7 +3,7 @@
  *
  *  SABRe-server
  *
- *  Copyright © 2012/2013 Zurich University of the Arts. All Rights Reserved.
+ *  Copyright © 2012-2014 Zurich University of the Arts. All Rights Reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
@@ -41,7 +41,10 @@
 
 #include "ofxOsc.h"
 #include "ofxXmlSettings.h"
-#include "threadedSerial.h"
+#include "threadedHID.h"
+
+#define NUMOSCSENDERS 4
+
 
 //--------------------------------------------------------
 class sabreServer : public ofSimpleApp
@@ -53,9 +56,9 @@ public:
 	void draw();
 	void exit();
 	
-	void startSerial();
-	void stopSerial();
-	void getSerialDeviceList();
+	void startHID();
+	void stopHID();
+	void getHIDDeviceList();
     
 	void startOSC();
 	void stopOSC();
@@ -81,7 +84,7 @@ public:
 	void mouseReleased();
 	
 	// class vars
-	threadedSerial	* serialThreadObject;
+	threadedHID	* rawHIDobject;
 
     ofxOscReceiver receiver;
 	int		receiveport;
