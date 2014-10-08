@@ -168,7 +168,7 @@ threadedSerial::~threadedSerial()
 
 void threadedSerial::start()
 {
-    startThread(true, false);   // blocking, verbose
+    startThread(true);   // blocking, verbose
     serial.flush(true, true);
 }
 

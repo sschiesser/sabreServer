@@ -39,6 +39,7 @@
 #define _THREADED_OBJECT
 
 #include "ofMain.h"
+#include "sabreServer.h"
 #include "ofxXmlSettings.h"
 #include "ofxOsc.h"
 
@@ -54,7 +55,7 @@
 #define PATTERNLENGTH_2 42 // maximumnumber of bytes in a right hand message
 #define PATTERNLENGTH_3 15 // maximumnumber of bytes in a air-mems message
 #define FILTER_CHANGE // comment out in order to build without the redundancy check
-#define NUMOSCSENDERS 4
+//#define NUMOSCSENDERS 4
 #define CALIBRATEOFFSET 15 // value to add/remove to calibrated max/min to avoid key flattering at rest
 
 class threadedSerial : public ofThread
