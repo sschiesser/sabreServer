@@ -198,6 +198,12 @@ void threadedHID::threadedFunction()
 			return 0;
 		}
 		if (num > 0) {
+			
+			printf("packet\t");
+            for(int i = 0; i < 43; i++){
+                printf("%d\t", rawHID.buf[i]);
+            }
+			printf("\n");
 
 			HIDparse();
             
@@ -744,6 +750,8 @@ void threadedHID::sendOSC(int ID, bool resetFlags)
     // The standard mode
     
     if( (senderMode[ID] & 1) == 1) {
+		
+		printf("sending OSC...\n");
 		// Keys ------------------------
 		
         systemTimestamp = ofGetElapsedTimeMillis();

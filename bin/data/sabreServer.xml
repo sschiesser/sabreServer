@@ -3,8 +3,6 @@
     <rawHID>
         <VID>0x1C57</VID>
         <PID>0x5ABE</PID>
-        <usagepage>0xFFAB</usagepage>
-        <usage>0x0100</usage>
         <manufacturername>ICST</manufacturername>
         <productname>SABRe</productname>
     </rawHID>

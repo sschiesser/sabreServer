@@ -60,6 +60,8 @@ void sabreServer::setup()
 	rawHIDobject->rawHID.deviceInfo.productName= "SABRe";
     rawHIDobject->rawHID.deviceSelected = true;
 
+	rawHIDobject->rawHID.deviceInfo.usagePage = 0xFFAB;
+	rawHIDobject->rawHID.deviceInfo.usage = 0x0100;
 
 	receiveport = 41001;
 	rawHIDobject->debounceTimeOut = 0;
@@ -516,9 +518,6 @@ void sabreServer::draw()
             ofRect( rightColumn + imuColumnLeft + CLAMP((104 * rawHIDobject->airValue.continuous), 0, 104), yy-9, 2, 12);
         }
         
-        
-        
-        
         // buttons
         ofSetColor(0, 0, 0, 255);
         //			yy = anchory+((35) * stepsize);
@@ -597,9 +596,9 @@ void sabreServer::draw()
             TTF.drawString("Calibrating Air", 502+12, 480+14);
         }
 
-    }else{
+    } else {
         //			str = "can't lock!\neither an error\nor the thread has stopped";
-        ofLog(OF_LOG_ERROR, "SabreServer: couldn't start serial Thread !! can't lock!\neither an error\nor the thread has stopped");
+        ofLog(OF_LOG_ERROR, "SabreServer: couldn't start HID Thread !! can't lock!\neither an error\nor the thread has stopped");
     }
 
 
@@ -908,10 +907,10 @@ bool sabreServer::readPrefs()
 		string PID = XML.getValue("sabre:rawHID:PID", "0x5ABE");
         rawHIDobject->rawHID.deviceInfo.vendorID = strtol(VID.c_str(), NULL, 16);
         rawHIDobject->rawHID.deviceInfo.productID = strtol(PID.c_str(), NULL, 16);
-		string usePg = XML.getValue("sabre:rawHID:usagepage", "0xFFAB");
-		string usg = XML.getValue("sabre:rawHID:usage", "0x0100");
-        rawHIDobject->rawHID.deviceInfo.usagePage = strtol(usePg.c_str(), NULL, 16);
-        rawHIDobject->rawHID.deviceInfo.usage = strtol(usg.c_str(), NULL, 16);
+//		string usePg = XML.getValue("sabre:rawHID:usagepage", "0xFFAB");
+//		string usg = XML.getValue("sabre:rawHID:usage", "0x0100");
+//        rawHIDobject->rawHID.deviceInfo.usagePage = strtol(usePg.c_str(), NULL, 16);
+//        rawHIDobject->rawHID.deviceInfo.usage = strtol(usg.c_str(), NULL, 16);
 		rawHIDobject->rawHID.deviceInfo.manufacturerName = XML.getValue("sabre:rawHID:manufacturername", "ICST");
         rawHIDobject->rawHID.deviceInfo.productName = XML.getValue("sabre:rawHID:productname", "SABRe");
         
