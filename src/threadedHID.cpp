@@ -37,12 +37,7 @@
 
 threadedHID::threadedHID()
 {
-    numImuAddr = 24;
 //	TTF.loadFont("inconsolata.ttf", 11, 1, 1, 0);
-	
-	streamSize[0] = PATTERNLENGTH_1;
-    streamSize[1] = PATTERNLENGTH_2;
-    streamSize[2] = PATTERNLENGTH_3;
     
 	scale10 = 1.0 / 1024.0;
 	scale11 = 1.0 / 2048.0;
@@ -144,7 +139,6 @@ threadedHID::threadedHID()
     keycode = 0;
     midinote = 67;
     validMidiNote = true;
-    OSCcounter = 0;
     
     senderActive[0] = true;
     sendFullFrame = false; // TODO
@@ -200,7 +194,7 @@ void threadedHID::threadedFunction()
 		if (num > 0) {
 			
 			printf("packet\t");
-            for(int i = 0; i < 43; i++){
+            for(int i = 0; i < 42; i++){ // just truncating the lines from where there are only zeroes
                 printf("%d\t", rawHID.buf[i]);
             }
 			printf("\n");
@@ -212,9 +206,9 @@ void threadedHID::threadedFunction()
                 
                 for(int i = 0; i < NUMOSCSENDERS; i++) {
                     if(senderActive[i]) {
-                        if(i == resetID){
+                        if(i == resetID) {
                             sendOSC( i, true );
-                        }else{
+                        } else {
                             sendOSC( i, false );
                         }
                     }
@@ -751,7 +745,8 @@ void threadedHID::sendOSC(int ID, bool resetFlags)
     
     if( (senderMode[ID] & 1) == 1) {
 		
-		printf("sending OSC...\n");
+		printf("sending OSC on %d with reset %d\n", ID, resetFlags);
+
 		// Keys ------------------------
 		
         systemTimestamp = ofGetElapsedTimeMillis();

@@ -915,11 +915,9 @@ bool sabreServer::readPrefs()
         rawHIDobject->rawHID.deviceInfo.productName = XML.getValue("sabre:rawHID:productname", "SABRe");
         
 		rawHIDobject->sendRawValues = XML.getValue("sabre:OSCsender:sendRawValues", 0);
-        rawHIDobject->OSCsendingInterval = XML.getValue("sabre:OSCsender:interval", 10);
+        rawHIDobject->OSCsendingInterval = XML.getValue("sabre:OSCsender:interval", 3);
+        rawHIDobject->OSCsendingInterval = MAX(rawHIDobject->OSCsendingInterval, 3); // clip to 3
         
-        if(rawHIDobject->OSCsendingInterval < 4) {
-            rawHIDobject->OSCsendingInterval = 4;
-        }
         rawHIDobject->numOSCloops = rawHIDobject->OSCsendingInterval * 2;
 		
 		framerate = XML.getValue("sabre:framerate", 20);
