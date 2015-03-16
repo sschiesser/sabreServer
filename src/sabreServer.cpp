@@ -39,7 +39,7 @@ void sabreServer::setup()
 {
 	ofSetEscapeQuitsApp(false);
 	ofEnableAlphaBlending();
-	titleString = "sabreServer version 0.96a";
+	titleString = "sabreServer version 0.96b";
 	
 	rawHIDobject = new(threadedHID);
 
